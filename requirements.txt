@@ -1,0 +1,9 @@
+dash>=2.14.0
+dash-bootstrap-components>=1.5.0
+dash-leaflet>=0.1.21
+dash-extensions>=1.0.0
+numpy>=1.24.0
+pandas>=2.0.0
+plotly>=5.17.0
+earthengine-api>=0.1.350
+pyarrow>=12.0.0
