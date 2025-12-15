@@ -4,6 +4,7 @@ import threading
 import time
 import traceback
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import dash
 import dash_bootstrap_components as dbc
@@ -14,6 +15,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 from dash import Input, Output, State, dcc, html
 import ee
+
+CHUNK_HOURS = None  # computed dynamically per year
+CHUNK_WORKERS = 20  # number of concurrent chunk fetches (year hours / 20)
 
 # Try to import dash_extensions for proper eventHandlers support
 try:
@@ -86,41 +90,61 @@ def fetch_era5_slice(lat, lon, start_iso, hours):
     return df[keep].sort_values("datetime").reset_index(drop=True)
 
 
-def fetch_era5_year_chunked(lat, lon, year=2023, progress_hook=None, chunk_hours=2000):
-    """Chunked fetch for a full year to avoid memory blowups."""
+def fetch_era5_year_chunked(
+    lat,
+    lon,
+    year=2023,
+    progress_hook=None,
+    chunk_hours=CHUNK_HOURS,
+    max_workers=CHUNK_WORKERS,
+):
+    """Chunked fetch for a full year (parallelized)."""
     start_iso = f"{year}-01-01T00:00:00Z"
     end_iso = f"{year + 1}-01-01T00:00:00Z"
     start = pd.to_datetime(start_iso, utc=True)
     end = pd.to_datetime(end_iso, utc=True)
-    chunk_delta = pd.to_timedelta(chunk_hours, unit="h")
-    frames = []
-    cursor = start
+    worker_count = max_workers or CHUNK_WORKERS
+    worker_count = max(1, worker_count)
 
-    # Pre-compute chunk count for progress
-    total_chunks = int(np.ceil((end - start) / chunk_delta))
-    chunk_idx = 0
+    total_hours = (end - start) / pd.Timedelta(hours=1)
+    # Split the year evenly across workers; last chunk closes the year to avoid drift.
+    chunk_delta = (end - start) / worker_count
+
+    chunks = []
+    for idx in range(worker_count):
+        chunk_start_dt = start + idx * chunk_delta
+        chunk_end_dt = end if idx == worker_count - 1 else start + (idx + 1) * chunk_delta
+        hours = (chunk_end_dt - chunk_start_dt) / pd.Timedelta(hours=1)
+        chunks.append((idx, chunk_start_dt.isoformat(), hours))
+
+    total_chunks = worker_count
     if progress_hook:
         progress_hook(0, total_chunks)
 
-    while cursor < end:
-        next_cursor = min(cursor + chunk_delta, end)
-        hours = (next_cursor - cursor) / pd.Timedelta(hours=1)
-        df_chunk = fetch_era5_slice(lat, lon, cursor.isoformat(), hours)
-        if not df_chunk.empty:
-            frames.append(df_chunk)
-        chunk_idx += 1
-        if progress_hook:
-            progress_hook(chunk_idx, total_chunks)
-        cursor = next_cursor
+    if not chunks:
+        return pd.DataFrame(), total_chunks
 
+    def fetch_one(chunk_meta):
+        chunk_idx, chunk_start, hours = chunk_meta
+        df_chunk = fetch_era5_slice(lat, lon, chunk_start, hours)
+        return chunk_idx, df_chunk
+
+    frames = [None] * total_chunks
+    completed = 0
+    with ThreadPoolExecutor(max_workers=worker_count) as executor:
+        futures = {executor.submit(fetch_one, chunk): chunk for chunk in chunks}
+        for future in as_completed(futures):
+            chunk_idx, df_chunk = future.result()
+            frames[chunk_idx] = df_chunk
+            completed += 1
+            if progress_hook:
+                progress_hook(completed, total_chunks)
+
+    frames = [f for f in frames if f is not None and not f.empty]
     if not frames:
         return pd.DataFrame(), total_chunks
 
-    combined = (
-        pd.concat(frames, ignore_index=True)
-        .sort_values("datetime")
-        .reset_index(drop=True)
-    )
+    combined = pd.concat(frames, ignore_index=True).sort_values("datetime").reset_index(drop=True)
     return combined, total_chunks
 
 
@@ -172,40 +196,60 @@ def fetch_era5_solar_slice(lat, lon, start_iso, hours):
     return df[keep].sort_values("datetime").reset_index(drop=True)
 
 
-def fetch_era5_solar_year_chunked(lat, lon, year=2023, progress_hook=None, chunk_hours=2000):
-    """Chunked fetch for a full year of solar radiation data."""
+def fetch_era5_solar_year_chunked(
+    lat,
+    lon,
+    year=2023,
+    progress_hook=None,
+    chunk_hours=CHUNK_HOURS,
+    max_workers=CHUNK_WORKERS,
+):
+    """Chunked fetch for a full year of solar radiation data (parallelized)."""
     start_iso = f"{year}-01-01T00:00:00Z"
     end_iso = f"{year + 1}-01-01T00:00:00Z"
     start = pd.to_datetime(start_iso, utc=True)
     end = pd.to_datetime(end_iso, utc=True)
-    chunk_delta = pd.to_timedelta(chunk_hours, unit="h")
-    frames = []
-    cursor = start
+    worker_count = max_workers or CHUNK_WORKERS
+    worker_count = max(1, worker_count)
 
-    total_chunks = int(np.ceil((end - start) / chunk_delta))
-    chunk_idx = 0
+    total_hours = (end - start) / pd.Timedelta(hours=1)
+    chunk_delta = (end - start) / worker_count
+
+    chunks = []
+    for idx in range(worker_count):
+        chunk_start_dt = start + idx * chunk_delta
+        chunk_end_dt = end if idx == worker_count - 1 else start + (idx + 1) * chunk_delta
+        hours = (chunk_end_dt - chunk_start_dt) / pd.Timedelta(hours=1)
+        chunks.append((idx, chunk_start_dt.isoformat(), hours))
+
+    total_chunks = worker_count
     if progress_hook:
         progress_hook(0, total_chunks)
 
-    while cursor < end:
-        next_cursor = min(cursor + chunk_delta, end)
-        hours = (next_cursor - cursor) / pd.Timedelta(hours=1)
-        df_chunk = fetch_era5_solar_slice(lat, lon, cursor.isoformat(), hours)
-        if not df_chunk.empty:
-            frames.append(df_chunk)
-        chunk_idx += 1
-        if progress_hook:
-            progress_hook(chunk_idx, total_chunks)
-        cursor = next_cursor
+    if not chunks:
+        return pd.DataFrame(), total_chunks
 
+    def fetch_one(chunk_meta):
+        chunk_idx, chunk_start, hours = chunk_meta
+        df_chunk = fetch_era5_solar_slice(lat, lon, chunk_start, hours)
+        return chunk_idx, df_chunk
+
+    frames = [None] * total_chunks
+    completed = 0
+    with ThreadPoolExecutor(max_workers=worker_count) as executor:
+        futures = {executor.submit(fetch_one, chunk): chunk for chunk in chunks}
+        for future in as_completed(futures):
+            chunk_idx, df_chunk = future.result()
+            frames[chunk_idx] = df_chunk
+            completed += 1
+            if progress_hook:
+                progress_hook(completed, total_chunks)
+
+    frames = [f for f in frames if f is not None and not f.empty]
     if not frames:
         return pd.DataFrame(), total_chunks
 
-    combined = (
-        pd.concat(frames, ignore_index=True)
-        .sort_values("datetime")
-        .reset_index(drop=True)
-    )
+    combined = pd.concat(frames, ignore_index=True).sort_values("datetime").reset_index(drop=True)
     return combined, total_chunks
 
 
@@ -476,11 +520,11 @@ def fetch_worker(lat, lon, year=2023, energy_type="wind"):
 
         if energy_type == "solar":
             df, total_chunks = fetch_era5_solar_year_chunked(
-                lat, lon, year=year, progress_hook=hook, chunk_hours=2000
+                lat, lon, year=year, progress_hook=hook, chunk_hours=CHUNK_HOURS
             )
         else:
             df, total_chunks = fetch_era5_year_chunked(
-                lat, lon, year=year, progress_hook=hook, chunk_hours=2000
+                lat, lon, year=year, progress_hook=hook, chunk_hours=CHUNK_HOURS
             )
 
         # Save to cache after successful fetch
@@ -739,7 +783,7 @@ app.layout = html.Div(
                                                 html.Div(
                                                     [
                                                         html.Div(
-                                                            "Annual purchase (MWh, scales the hourly profile)",
+                                                            "Annual purchase (GWh, scales the hourly profile)",
                                                             style={"fontWeight": "500"},
                                                         ),
                                                         html.Div(
@@ -749,14 +793,14 @@ app.layout = html.Div(
                                                     ],
                                                     className="d-flex justify-content-between align-items-center mb-2",
                                                 ),
-                                                dcc.Slider(
+                                                dbc.Input(
                                                     id="target-mwh",
+                                                    type="number",
                                                     min=0,
-                                                    max=400,
                                                     step=10,
                                                     value=100,
-                                                    marks={0: "0", 100: "100", 200: "200", 300: "300", 400: "400"},
-                                                    tooltip={"always_visible": False, "placement": "bottom"},
+                                                    placeholder="Enter annual GWh",
+                                                    style={"maxWidth": "160px"},
                                                 ),
                                                 html.Div(
                                                     [
@@ -1026,16 +1070,18 @@ app.layout = html.Div(
                                                                     ),
                                                                     dbc.Col(
                                                                         [
-                                                                            dbc.Label("DC capacity (kW)"),
+                                                                            dbc.Label("DC capacity (kW, auto from peak hour)"),
                                                                             dbc.Input(
                                                                                 id="dc-capacity",
                                                                                 type="number",
-                                                                                value=1000,
+                                                                                value=None,
                                                                                 step=100,
-                                                                                min=1,
+                                                                                min=0,
+                                                                                placeholder="Computed after fetch",
+                                                                                disabled=True,
                                                                             ),
                                                                             html.Small(
-                                                                                "Reference for CF calculation",
+                                                                                "We derive DC capacity from the peak hour of AC output (AC * ILR).",
                                                                                 style={"color": "#5f6368"},
                                                                             ),
                                                                         ]
@@ -1203,8 +1249,8 @@ def update_map_center(loc):
 def show_target_mwh(val):
     """Reflect slider value next to the control."""
     if val is None:
-        return "Choose an annual MWh purchase"
-    return f"{val:,.0f} MWh per year"
+        return "Choose an annual GWh purchase"
+    return f"{val:,.2f} GWh per year"
 
 
 @app.callback(
@@ -1254,7 +1300,7 @@ def update_energy_type_ui(energy_type):
     if energy_type == "solar":
         return (
             "Solar profile builder",
-            {"backgroundColor": google_colors["yellow"], "color": "#111"},
+            {"backgroundColor": "#FFEB3B", "color": "#111"},
             "Forecast-quality shapes for your solar farm",
             "Drop a pin for location, choose how many RECs you purchase, tweak solar array settings, then fetch. Outputs and CSV download unlock as soon as the run finishes.",
             "Where is your solar farm?",
@@ -1456,25 +1502,34 @@ def update_analysis(json_data, cin, rated_spd, cout, turb_mw,
     year_val = year_source if year_source is not None else (year if year is not None else 2023)
 
     if energy_type == "solar":
-        # Guard against None values for solar
-        if any(v is None for v in [panel_tilt, panel_azimuth, ilr, sys_eff, dc_cap, target_mwh]):
+        # Guard against None values for solar (dc_cap is computed automatically)
+        if any(v is None for v in [panel_tilt, panel_azimuth, ilr, sys_eff, target_mwh]):
             return dash.no_update, dash.no_update, dash.no_update
 
         # Calculate solar power
         sys_eff_frac = sys_eff / 100.0
+        # First pass with nominal DC to compute peak hour, then recompute using that peak
+        nominal_dc_kw = 1000.0
+        ac_power_kw_nominal, poa = apply_solar_power(
+            df["ghi_wm2"], df["datetime"], lat, lon,
+            panel_tilt, panel_azimuth, ilr, nominal_dc_kw, sys_eff_frac
+        )
+        peak_ac_kw = float(np.max(ac_power_kw_nominal)) if len(ac_power_kw_nominal) else 0.0
+        dc_cap_auto_kw = peak_ac_kw * ilr if peak_ac_kw > 0 else nominal_dc_kw
+
         ac_power_kw, poa = apply_solar_power(
             df["ghi_wm2"], df["datetime"], lat, lon,
-            panel_tilt, panel_azimuth, ilr, dc_cap, sys_eff_frac
+            panel_tilt, panel_azimuth, ilr, dc_cap_auto_kw, sys_eff_frac
         )
         df["ac_power_kw"] = ac_power_kw
         df["poa_wm2"] = poa
 
-        # AC capacity for CF calculation
-        ac_capacity_kw = dc_cap / ilr
+        ac_capacity_kw = dc_cap_auto_kw / ilr
         df["cf"] = df["ac_power_kw"] / ac_capacity_kw
 
         avg_cf = df["cf"].mean()
-        # Scale to target MWh
+        # Scale to target energy (convert GWh to MWh)
+        target_mwh = target_mwh * 1000 if target_mwh is not None else 0
         installed_kw_ac = target_mwh * 1000 / (8760 * avg_cf) if avg_cf > 0 else 0
         installed_mw_ac = installed_kw_ac / 1000
         df["scaled_mw"] = df["cf"] * installed_mw_ac
@@ -1484,8 +1539,8 @@ def update_analysis(json_data, cin, rated_spd, cout, turb_mw,
         plot_color = google_colors["yellow"]
         title_prefix = "Solar"
         summary = (
-            f"Avg CF: {avg_cf:.2%}. AC capacity to meet {target_mwh:.0f} MWh/year: "
-            f"{installed_mw_ac:.2f} MW (DC: {installed_mw_ac * ilr:.2f} MW). "
+            f"Avg CF: {avg_cf:.2%}. AC capacity to meet {target_mwh/1000:.2f} GWh/year: "
+            f"{installed_mw_ac:.2f} MW (DC: {dc_cap_auto_kw/1000:.2f} MWdc at peak-hour-based sizing). "
             f"ILR: {ilr:.2f}. Rows: {len(df)}. "
             f"Location: ({lat:.2f}, {lon:.2f}) | Year: {year_val}."
         )
@@ -1500,6 +1555,7 @@ def update_analysis(json_data, cin, rated_spd, cout, turb_mw,
         df["cf"] = df["power_mw"] / turb_mw
 
         avg_cf = df["cf"].mean()
+        target_mwh = target_mwh * 1000 if target_mwh is not None else 0
         installed_mw = target_mwh / (8760 * avg_cf) if avg_cf > 0 else 0
         df["scaled_mw"] = df["cf"] * installed_mw
         df["scaled_mwh"] = df["scaled_mw"]
@@ -1507,7 +1563,7 @@ def update_analysis(json_data, cin, rated_spd, cout, turb_mw,
         plot_color = google_colors["blue"]
         title_prefix = "Wind"
         summary = (
-            f"Avg CF: {avg_cf:.2%}. Installed MW to meet {target_mwh:.0f} MWh/year: "
+            f"Avg CF: {avg_cf:.2%}. Installed MW to meet {target_mwh/1000:.2f} GWh/year: "
             f"{installed_mw:.2f} MW. Rows: {len(df)}. "
             f"Location: ({lat:.2f}, {lon:.2f}) | Year: {year_val}."
         )
@@ -1524,7 +1580,7 @@ def update_analysis(json_data, cin, rated_spd, cout, turb_mw,
         )
     )
     fig_shape.update_layout(
-        title=f"{title_prefix} hourly shape (scaled to purchased MWh)",
+        title=f"{title_prefix} hourly shape (scaled to purchased GWh)",
         yaxis_title="Power (MW)",
         template="plotly_white",
     )
@@ -1536,7 +1592,7 @@ def update_analysis(json_data, cin, rated_spd, cout, turb_mw,
         monthly,
         x="month",
         y="scaled_mwh",
-        title=f"{title_prefix} monthly energy (MWh, scaled)",
+        title=f"{title_prefix} monthly energy (MWh, scaled from GWh target)",
         color_discrete_sequence=[google_colors["green"]],
         labels={"scaled_mwh": "MWh"},
     )
@@ -1607,20 +1663,28 @@ def download_csv(n_clicks, json_data, cin, rated_spd, cout, turb_mw,
         year_val = year_source if year_source is not None else (year if year is not None else 2023)
 
         if energy_type == "solar":
-            # Guard against None values for solar
-            if any(v is None for v in [panel_tilt, panel_azimuth, ilr, sys_eff, dc_cap, target_mwh]):
+            # Guard against None values for solar (dc_cap is computed automatically)
+            if any(v is None for v in [panel_tilt, panel_azimuth, ilr, sys_eff, target_mwh]):
                 return dash.no_update, "Download failed: missing solar settings."
 
-            # Calculate solar power
+            # Calculate solar power with an automatic DC capacity derived from the peak hour
             sys_eff_frac = sys_eff / 100.0
+            nominal_dc_kw = 1000.0
+            ac_power_kw_nominal, poa = apply_solar_power(
+                df["ghi_wm2"], df["datetime"], lat, lon,
+                panel_tilt, panel_azimuth, ilr, nominal_dc_kw, sys_eff_frac
+            )
+            peak_ac_kw = float(np.max(ac_power_kw_nominal)) if len(ac_power_kw_nominal) else 0.0
+            dc_cap_auto_kw = peak_ac_kw * ilr if peak_ac_kw > 0 else nominal_dc_kw
+
             ac_power_kw, poa = apply_solar_power(
                 df["ghi_wm2"], df["datetime"], lat, lon,
-                panel_tilt, panel_azimuth, ilr, dc_cap, sys_eff_frac
+                panel_tilt, panel_azimuth, ilr, dc_cap_auto_kw, sys_eff_frac
             )
             df["ac_power_kw"] = ac_power_kw
             df["poa_wm2"] = poa
 
-            ac_capacity_kw = dc_cap / ilr
+            ac_capacity_kw = dc_cap_auto_kw / ilr
             df["cf"] = df["ac_power_kw"] / ac_capacity_kw
 
             avg_cf = df["cf"].mean()
@@ -1631,6 +1695,11 @@ def download_csv(n_clicks, json_data, cin, rated_spd, cout, turb_mw,
 
             # Build solar download dataframe
             df_download = df[["datetime", "ghi_wm2", "poa_wm2", "ac_power_kw", "cf", "scaled_mw", "scaled_mwh"]].copy()
+            df_download["datetime_utc"] = (
+                pd.to_datetime(df_download["datetime"], utc=True)
+                .dt.tz_convert("UTC")
+                .dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+            )
             df_download.insert(0, "latitude", lat)
             df_download.insert(1, "longitude", lon)
             filename = f"solar_hourly_shape_{year_val}_lat{lat:.2f}_lon{lon:.2f}.csv"
@@ -1649,8 +1718,13 @@ def download_csv(n_clicks, json_data, cin, rated_spd, cout, turb_mw,
             df["scaled_mw"] = df["cf"] * installed_mw
             df["scaled_mwh"] = df["scaled_mw"]
 
-            # Build wind download dataframe
-            df_download = df[["datetime", "wind_speed_100m", "power_mw", "cf", "scaled_mw", "scaled_mwh"]].copy()
+            # Build wind download dataframe (scaled_mw and scaled_mwh are identical for hourly; keep scaled_mw only)
+            df_download = df[["datetime", "wind_speed_100m", "power_mw", "cf", "scaled_mw"]].copy()
+            df_download["datetime_utc"] = (
+                pd.to_datetime(df_download["datetime"], utc=True)
+                .dt.tz_convert("UTC")
+                .dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+            )
             df_download.insert(0, "latitude", lat)
             df_download.insert(1, "longitude", lon)
             filename = f"wind_hourly_shape_{year_val}_lat{lat:.2f}_lon{lon:.2f}.csv"
