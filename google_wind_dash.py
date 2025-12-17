@@ -93,7 +93,7 @@ def fetch_era5_slice(lat, lon, start_iso, hours):
 def fetch_era5_year_chunked(
     lat,
     lon,
-    year=2023,
+    year=2024,
     progress_hook=None,
     chunk_hours=CHUNK_HOURS,
     max_workers=CHUNK_WORKERS,
@@ -148,7 +148,7 @@ def fetch_era5_year_chunked(
     return combined, total_chunks
 
 
-def apply_power_curve(ws_series, cut_in, cut_out, rated_speed, rated_power_mw):
+def apply_power_curve(ws_series, cut_in, rated_speed, cut_out, rated_power_mw):
     """Simple power curve (cubic ramp to rated, then flat)."""
     ws = np.asarray(ws_series, dtype=float)
     power = np.zeros_like(ws, dtype=float)
@@ -158,7 +158,7 @@ def apply_power_curve(ws_series, cut_in, cut_out, rated_speed, rated_power_mw):
         (ws[mask_ramp] - cut_in) / (rated_speed - cut_in)
     ) ** 3
 
-    mask_rated = (ws >= rated_speed) & (ws < cut_out)
+    mask_rated = (ws >= rated_speed) & (ws <= cut_out)
     power[mask_rated] = rated_power_mw
 
     return power
@@ -199,7 +199,7 @@ def fetch_era5_solar_slice(lat, lon, start_iso, hours):
 def fetch_era5_solar_year_chunked(
     lat,
     lon,
-    year=2023,
+    year=2024,
     progress_hook=None,
     chunk_hours=CHUNK_HOURS,
     max_workers=CHUNK_WORKERS,
@@ -385,7 +385,7 @@ def log_gee_error(context: str, exc: Exception):
 CACHE_DIR = "data"
 
 
-def get_cache_path(lat, lon, year=2023, use_parquet=True, energy_type="wind"):
+def get_cache_path(lat, lon, year=2024, use_parquet=True, energy_type="wind"):
     """Generate cache file path for a location."""
     # Round to 2 decimal places for cache key (about 1km precision)
     lat_key = round(lat, 2)
@@ -396,7 +396,7 @@ def get_cache_path(lat, lon, year=2023, use_parquet=True, energy_type="wind"):
     return os.path.join(CACHE_DIR, f"{prefix}_{year}_lat_{lat_key}_lon_{lon_key}.{ext}")
 
 
-def load_from_cache(lat, lon, year=2023, energy_type="wind"):
+def load_from_cache(lat, lon, year=2024, energy_type="wind"):
     """Load cached data for a location if it exists."""
     # Try parquet first
     cache_path = get_cache_path(lat, lon, year, use_parquet=True, energy_type=energy_type)
@@ -422,7 +422,7 @@ def load_from_cache(lat, lon, year=2023, energy_type="wind"):
     return None
 
 
-def save_to_cache(df, lat, lon, year=2023, energy_type="wind"):
+def save_to_cache(df, lat, lon, year=2024, energy_type="wind"):
     """Save DataFrame to cache."""
     if df.empty:
         return
@@ -441,7 +441,7 @@ def save_to_cache(df, lat, lon, year=2023, energy_type="wind"):
             print(f"[Cache] Error saving cache: {exc2}")
 
 
-def get_cached_locations(year=2023, energy_type="wind"):
+def get_cached_locations(year=2024, energy_type="wind"):
     """Scan cache directory and return list of (lat, lon) tuples for cached locations."""
     cached = []
     if not os.path.exists(CACHE_DIR):
@@ -482,7 +482,7 @@ def get_fetch_state():
         return dict(FETCH_STATE)
 
 
-def fetch_worker(lat, lon, year=2023, energy_type="wind"):
+def fetch_worker(lat, lon, year=2024, energy_type="wind"):
     set_fetch_state(status="running", progress=0, total=1, message="Starting...")
     started = time.perf_counter()
     try:
@@ -604,24 +604,6 @@ app.layout = html.Div(
                                     [
                                         dbc.Col(
                                             [
-                                                html.Div(
-                                                    [
-                                                        dbc.Badge(
-                                                            id="energy-type-badge",
-                                                            children="Wind profile builder",
-                                                            color="primary",
-                                                            style={"backgroundColor": google_colors["blue"]},
-                                                            className="me-2",
-                                                        ),
-                                                        dbc.Badge(
-                                                            id="year-badge",
-                                                            children="ERA5 2023",
-                                                            color="warning",
-                                                            style={"backgroundColor": google_colors["yellow"], "color": "#111"},
-                                                        ),
-                                                    ],
-                                                    className="mb-2",
-                                                ),
                                                 html.H2(
                                                     id="main-title",
                                                     children="Forecast-quality shapes for your wind farm",
@@ -745,7 +727,7 @@ app.layout = html.Div(
                                                                                 {"label": str(y), "value": y}
                                                                                 for y in range(2024, 2009, -1)
                                                                             ],
-                                                                            value=2023,
+                                                                            value=2024,
                                                                             clearable=False,
                                                                             style={"minWidth": "90px"},
                                                                         ),
@@ -1114,54 +1096,61 @@ app.layout = html.Div(
                     ],
                     className="g-3",
                 ),
-                dbc.Card(
-                    [
-                        dbc.CardHeader(
-                            dbc.Row(
-                                [
-                                    dbc.Col(
-                                        html.Div(
-                                            "Outputs",
-                                            style={"fontWeight": "700", "color": google_colors["blue"]},
-                                        )
-                                    ),
-                                    dbc.Col(
-                                        dbc.Button(
-                                            "Download hourly CSV",
-                                            id="download-btn",
-                                            color="success",
-                                            style={
-                                                "backgroundColor": google_colors["green"],
-                                                "borderColor": google_colors["green"],
-                                                "fontWeight": "600",
-                                            },
-                                            className="float-end",
-                                        ),
-                                        width=4,
-                                    ),
-                                ],
-                                align="center",
-                            ),
-                            style={"backgroundColor": "#fff"},
-                        ),
-                        dbc.CardBody(
+                html.Div(
+                    id="outputs-container",
+                    children=[
+                        dbc.Card(
                             [
-                                html.Div(
-                                    id="summary-text",
-                                    style={"marginBottom": "12px", "color": "#3c4043", "fontWeight": "500"},
+                                dbc.CardHeader(
+                                    dbc.Row(
+                                        [
+                                            dbc.Col(
+                                                html.Div(
+                                                    "Outputs",
+                                                    style={"fontWeight": "700", "color": google_colors["blue"]},
+                                                )
+                                            ),
+                                            dbc.Col(
+                                                dbc.Button(
+                                                    "Download hourly CSV",
+                                                    id="download-btn",
+                                                    color="success",
+                                                    style={
+                                                        "backgroundColor": google_colors["green"],
+                                                        "borderColor": google_colors["green"],
+                                                        "fontWeight": "600",
+                                                    },
+                                                    className="float-end",
+                                                    disabled=True,
+                                                ),
+                                                width=4,
+                                            ),
+                                        ],
+                                        align="center",
+                                    ),
+                                    style={"backgroundColor": "#fff"},
                                 ),
-                                dcc.Graph(id="shape-graph", style={"height": "360px"}),
-                                dcc.Graph(id="monthly-graph", style={"height": "320px"}),
-                                dcc.Download(id="download-data"),
-                            ]
-                        ),
+                                dbc.CardBody(
+                                    [
+                                        html.Div(
+                                            id="summary-text",
+                                            style={"marginBottom": "12px", "color": "#3c4043", "fontWeight": "500"},
+                                        ),
+                                        dcc.Graph(id="shape-graph", style={"height": "360px"}),
+                                        dcc.Graph(id="monthly-graph", style={"height": "320px"}),
+                                        dcc.Download(id="download-data"),
+                                    ]
+                                ),
+                            ],
+                            className="mt-4 shadow-sm",
+                            style={"border": "1px solid #e0e0e0"},
+                        )
                     ],
-                    className="mt-4 shadow-sm",
-                    style={"border": "1px solid #e0e0e0"},
+                    style={"display": "none"},  # hidden until data arrives
                 ),
                 dcc.Interval(id="progress-interval", interval=1000, n_intervals=0),
                 dcc.Store(id="location-store", data={"lat": default_lat, "lon": default_lon}),
-                dcc.Store(id="year-store", data=2023),
+                dcc.Store(id="year-store", data=2024),
                 dcc.Store(id="energy-type-store", data="wind"),
                 dcc.Store(id="energy-data-store"),
             ],
@@ -1253,13 +1242,6 @@ def show_target_mwh(val):
     return f"{val:,.2f} GWh per year"
 
 
-@app.callback(
-    Output("year-badge", "children"),
-    Input("year-dropdown", "value"),
-)
-def update_year_badge(year):
-    """Update the badge to show selected year."""
-    return f"ERA5 {year}"
 
 
 @app.callback(
@@ -1285,8 +1267,20 @@ def toggle_solar_advanced(n, is_open):
 
 
 @app.callback(
-    Output("energy-type-badge", "children"),
-    Output("energy-type-badge", "style"),
+    Output("outputs-container", "style"),
+    Output("download-btn", "disabled"),
+    Input("energy-data-store", "data"),
+    Input("progress-interval", "n_intervals"),
+)
+def toggle_outputs_visibility(data, _n):
+    """Hide outputs until a fetch has produced data."""
+    state = get_fetch_state()
+    has_data = data is not None or (state.get("result") is not None or state.get("last_result") is not None)
+    style = {} if has_data else {"display": "none"}
+    return style, not has_data
+
+
+@app.callback(
     Output("main-title", "children"),
     Output("main-description", "children"),
     Output("location-card-header", "children"),
@@ -1299,8 +1293,6 @@ def update_energy_type_ui(energy_type):
     """Update UI elements based on selected energy type."""
     if energy_type == "solar":
         return (
-            "Solar profile builder",
-            {"backgroundColor": "#FFEB3B", "color": "#111"},
             "Forecast-quality shapes for your solar farm",
             "Drop a pin for location, choose how many RECs you purchase, tweak solar array settings, then fetch. Outputs and CSV download unlock as soon as the run finishes.",
             "Where is your solar farm?",
@@ -1310,8 +1302,6 @@ def update_energy_type_ui(energy_type):
         )
     else:
         return (
-            "Wind profile builder",
-            {"backgroundColor": google_colors["blue"]},
             "Forecast-quality shapes for your wind farm",
             "Drop a pin for location, choose how many RECs you purchase, tweak advanced turbine settings, then fetch. Outputs and CSV download unlock as soon as the run finishes.",
             "Where is your wind farm?",
@@ -1499,7 +1489,7 @@ def update_analysis(json_data, cin, rated_spd, cout, turb_mw,
 
     lat = lat_source if lat_source is not None else loc.get("lat", default_lat)
     lon = lon_source if lon_source is not None else loc.get("lon", default_lon)
-    year_val = year_source if year_source is not None else (year if year is not None else 2023)
+    year_val = year_source if year_source is not None else (year if year is not None else 2024)
 
     if energy_type == "solar":
         # Guard against None values for solar (dc_cap is computed automatically)
@@ -1550,7 +1540,7 @@ def update_analysis(json_data, cin, rated_spd, cout, turb_mw,
             return dash.no_update, dash.no_update, dash.no_update
 
         df["power_mw"] = apply_power_curve(
-            df["wind_speed_100m"].values, cin, cout, rated_spd, turb_mw
+            df["wind_speed_100m"].values, cin, rated_spd, cout, turb_mw
         )
         df["cf"] = df["power_mw"] / turb_mw
 
@@ -1568,6 +1558,12 @@ def update_analysis(json_data, cin, rated_spd, cout, turb_mw,
             f"Location: ({lat:.2f}, {lon:.2f}) | Year: {year_val}."
         )
 
+    # Google-style font settings
+    google_font = "Roboto, Open Sans, Helvetica Neue, sans-serif"
+    title_font = dict(family=google_font, size=16, color="#202124", weight=600)
+    axis_font = dict(family=google_font, size=12, color="#5f6368")
+    tick_font = dict(family=google_font, size=11, color="#5f6368")
+
     # Hourly shape plot (scaled)
     fig_shape = go.Figure()
     fig_shape.add_trace(
@@ -1575,14 +1571,20 @@ def update_analysis(json_data, cin, rated_spd, cout, turb_mw,
             x=df["datetime"],
             y=df["scaled_mw"],
             mode="lines",
-            line=dict(color=plot_color),
+            line=dict(color=plot_color, width=1.5),
             name="Scaled MW",
         )
     )
     fig_shape.update_layout(
-        title=f"{title_prefix} hourly shape (scaled to purchased GWh)",
+        title=dict(text=f"{title_prefix} hourly shape (scaled to purchased GWh)", font=title_font),
         yaxis_title="Power (MW)",
         template="plotly_white",
+        font=dict(family=google_font),
+        yaxis=dict(titlefont=axis_font, tickfont=tick_font, gridcolor="#e8eaed"),
+        xaxis=dict(tickfont=tick_font, gridcolor="#e8eaed"),
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        margin=dict(t=50, b=40, l=60, r=20),
     )
 
     # Monthly totals plot
@@ -1594,7 +1596,16 @@ def update_analysis(json_data, cin, rated_spd, cout, turb_mw,
         y="scaled_mwh",
         title=f"{title_prefix} monthly energy (MWh, scaled from GWh target)",
         color_discrete_sequence=[google_colors["green"]],
-        labels={"scaled_mwh": "MWh"},
+        labels={"scaled_mwh": "MWh", "month": "Month"},
+    )
+    fig_monthly.update_layout(
+        title=dict(font=title_font),
+        font=dict(family=google_font),
+        yaxis=dict(titlefont=axis_font, tickfont=tick_font, gridcolor="#e8eaed"),
+        xaxis=dict(titlefont=axis_font, tickfont=tick_font),
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        margin=dict(t=50, b=50, l=60, r=20),
     )
 
     return fig_shape, fig_monthly, summary
@@ -1660,7 +1671,7 @@ def download_csv(n_clicks, json_data, cin, rated_spd, cout, turb_mw,
 
         lat = lat_source if lat_source is not None else loc.get("lat", default_lat)
         lon = lon_source if lon_source is not None else loc.get("lon", default_lon)
-        year_val = year_source if year_source is not None else (year if year is not None else 2023)
+        year_val = year_source if year_source is not None else (year if year is not None else 2024)
 
         if energy_type == "solar":
             # Guard against None values for solar (dc_cap is computed automatically)
@@ -1669,6 +1680,7 @@ def download_csv(n_clicks, json_data, cin, rated_spd, cout, turb_mw,
 
             # Calculate solar power with an automatic DC capacity derived from the peak hour
             sys_eff_frac = sys_eff / 100.0
+            target_mwh = (target_mwh or 0) * 1000  # convert GWh to MWh for scaling
             nominal_dc_kw = 1000.0
             ac_power_kw_nominal, poa = apply_solar_power(
                 df["ghi_wm2"], df["datetime"], lat, lon,
@@ -1709,11 +1721,12 @@ def download_csv(n_clicks, json_data, cin, rated_spd, cout, turb_mw,
                 return dash.no_update, "Download failed: missing turbine or purchase inputs."
 
             df["power_mw"] = apply_power_curve(
-                df["wind_speed_100m"].values, cin, cout, rated_spd, turb_mw
+                df["wind_speed_100m"].values, cin, rated_spd, cout, turb_mw
             )
             df["cf"] = df["power_mw"] / turb_mw
 
             avg_cf = df["cf"].mean()
+            target_mwh = (target_mwh or 0) * 1000  # convert GWh to MWh for scaling
             installed_mw = target_mwh / (8760 * avg_cf) if avg_cf > 0 else 0
             df["scaled_mw"] = df["cf"] * installed_mw
             df["scaled_mwh"] = df["scaled_mw"]
