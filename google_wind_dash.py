@@ -11,6 +11,7 @@ import dash_bootstrap_components as dbc
 import dash_leaflet as dl
 import numpy as np
 import pandas as pd
+from io import StringIO
 import plotly.express as px
 import plotly.graph_objects as go
 from dash import Input, Output, State, dcc, html
@@ -1624,7 +1625,7 @@ def update_analysis(json_data, cin, rated_spd, cout, turb_mw, max_plant_cf,
     if not df_json:
         return dash.no_update, dash.no_update, dash.no_update
 
-    df = pd.read_json(df_json, orient="split")
+    df = pd.read_json(StringIO(df_json), orient="split")
     df["datetime"] = pd.to_datetime(df["datetime"])
 
     lat = lat_source if lat_source is not None else loc.get("lat", default_lat)
@@ -1809,7 +1810,7 @@ def download_csv(n_clicks, json_data, cin, rated_spd, cout, turb_mw, max_plant_c
         if not df_json:
             return dash.no_update, "Download failed: no data payload available."
 
-        df = pd.read_json(df_json, orient="split")
+        df = pd.read_json(StringIO(df_json), orient="split")
         df["datetime"] = pd.to_datetime(df["datetime"])
 
         lat = lat_source if lat_source is not None else loc.get("lat", default_lat)
