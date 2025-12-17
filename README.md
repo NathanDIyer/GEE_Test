@@ -301,18 +301,6 @@ export EE_PROJECT="your-gcp-project-id"
 
 ---
 
-## Roadmap
-
-- [ ] Custom turbine power curves (upload CSV)
-- [ ] Wind shear correction slider (hub height adjustment)
-- [ ] Multi-year analysis (P50/P90)
-- [ ] Single-axis tracking for solar
-- [ ] Batch mode for multiple locations
-- [ ] API endpoint for programmatic access
-- [ ] Integration with storage dispatch modeling
-
----
-
 ## Contact
 
 For questions, feature requests, or bug reports, please open an issue or contact the development team.
