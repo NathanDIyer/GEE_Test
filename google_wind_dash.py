@@ -48,15 +48,25 @@ def init_ee():
         # Service account credentials provided as JSON string (for Render/cloud deployment)
         try:
             sa_creds = json.loads(sa_creds_json)
+            service_email = sa_creds.get("client_email")
+            print(f"[GEE] Attempting service account auth for: {service_email}")
+            print(f"[GEE] Project: {project}")
+
             credentials = ee.ServiceAccountCredentials(
-                sa_creds.get("client_email"),
+                service_email,
                 key_data=sa_creds_json
             )
             ee.Initialize(credentials=credentials, project=project)
-            print(f"[GEE] Initialized with service account: {sa_creds.get('client_email')}")
+            print(f"[GEE] Successfully initialized with service account: {service_email}")
             return
+        except json.JSONDecodeError as exc:
+            print(f"[GEE] FATAL: Invalid JSON in GOOGLE_APPLICATION_CREDENTIALS_JSON: {exc}")
+            raise
         except Exception as exc:
-            print(f"[GEE] Service account init failed: {exc}, falling back to default")
+            print(f"[GEE] FATAL: Service account init failed: {exc}")
+            print("[GEE] Make sure the service account is registered with Earth Engine at:")
+            print("[GEE] https://signup.earthengine.google.com or via code.earthengine.google.com")
+            raise
 
     # Local development - use default credentials
     if project:
