@@ -16,6 +16,9 @@ import plotly.graph_objects as go
 from dash import Input, Output, State, dcc, html
 import ee
 
+# Password protection
+from dash_auth import BasicAuth
+
 CHUNK_HOURS = None  # computed dynamically per year
 CHUNK_WORKERS = 20  # number of concurrent chunk fetches (year hours / 20)
 
@@ -35,13 +38,33 @@ except ImportError:
 
 
 def init_ee():
+    """Initialize Earth Engine - supports local credentials or service account for deployment."""
+    import json
+
     project = os.environ.get("EE_PROJECT")
+    sa_creds_json = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
+
+    if sa_creds_json:
+        # Service account credentials provided as JSON string (for Render/cloud deployment)
+        try:
+            sa_creds = json.loads(sa_creds_json)
+            credentials = ee.ServiceAccountCredentials(
+                sa_creds.get("client_email"),
+                key_data=sa_creds_json
+            )
+            ee.Initialize(credentials=credentials, project=project)
+            print(f"[GEE] Initialized with service account: {sa_creds.get('client_email')}")
+            return
+        except Exception as exc:
+            print(f"[GEE] Service account init failed: {exc}, falling back to default")
+
+    # Local development - use default credentials
     if project:
         ee.Initialize(project=project)
-        print(f"Initialized Earth Engine with project: {project}")
+        print(f"[GEE] Initialized with project: {project}")
     else:
         ee.Initialize()
-        print("Initialized Earth Engine with default credentials/project")
+        print("[GEE] Initialized with default credentials")
 
 
 def add_wind_speed(image):
@@ -148,18 +171,43 @@ def fetch_era5_year_chunked(
     return combined, total_chunks
 
 
-def apply_power_curve(ws_series, cut_in, rated_speed, cut_out, rated_power_mw):
-    """Simple power curve (cubic ramp to rated, then flat)."""
+def apply_power_curve(ws_series, cut_in, rated_speed, cut_out, rated_power_mw, max_cf=0.90):
+    """
+    Realistic wind power curve with plant-level constraints.
+
+    Args:
+        ws_series: Wind speed array (m/s)
+        cut_in: Minimum wind speed for generation (m/s)
+        rated_speed: Wind speed at which turbine reaches rated power (m/s)
+        cut_out: Maximum operating wind speed (m/s)
+        rated_power_mw: Turbine nameplate capacity (MW)
+        max_cf: Maximum plant capacity factor (0-1), accounts for wake losses,
+                availability, and spatial diversity. Real wind farms rarely
+                exceed 85-95% of nameplate even in ideal conditions.
+
+    Returns:
+        Array of power output (MW)
+    """
     ws = np.asarray(ws_series, dtype=float)
     power = np.zeros_like(ws, dtype=float)
 
+    # Cubic ramp from cut-in to rated speed
     mask_ramp = (ws >= cut_in) & (ws < rated_speed)
     power[mask_ramp] = rated_power_mw * (
         (ws[mask_ramp] - cut_in) / (rated_speed - cut_in)
     ) ** 3
 
+    # Rated power region (capped by plant-level max CF)
     mask_rated = (ws >= rated_speed) & (ws <= cut_out)
     power[mask_rated] = rated_power_mw
+
+    # Apply plant-level capacity factor cap to account for:
+    # - Wake losses between turbines (10-20%)
+    # - Turbine availability (~95-97%)
+    # - Spatial wind diversity across plant
+    # - Grid/curtailment constraints
+    max_power = rated_power_mw * max_cf
+    power = np.minimum(power, max_power)
 
     return power
 
@@ -584,10 +632,21 @@ app = dash.Dash(
     external_stylesheets=[
         dbc.themes.FLATLY,
         "https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&family=Roboto:wght@400;500;600;700&display=swap",
+        "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css",
     ],
 )
 app.title = "Energy Shape Builder"
 server = app.server
+
+# Password protection - set DASH_USERNAME and DASH_PASSWORD environment variables
+# For local dev without auth, these default to None which disables auth
+dash_user = os.environ.get("DASH_USERNAME")
+dash_pass = os.environ.get("DASH_PASSWORD")
+if dash_user and dash_pass:
+    auth = BasicAuth(app, {dash_user: dash_pass})
+    print(f"[Auth] Password protection enabled for user: {dash_user}")
+else:
+    print("[Auth] No DASH_USERNAME/DASH_PASSWORD set - running without auth")
 
 default_lat = 39.8283
 default_lon = -98.5795
@@ -840,7 +899,52 @@ app.layout = html.Div(
                                                         [
                                                             dbc.Col(
                                                                 html.Div(
-                                                                    "Advanced turbine settings",
+                                                                    [
+                                                                        "Advanced turbine settings ",
+                                                                        html.Span(
+                                                                            html.I(className="bi bi-info-circle-fill"),
+                                                                            id="power-curve-info",
+                                                                            style={
+                                                                                "cursor": "pointer",
+                                                                                "color": google_colors["blue"],
+                                                                                "fontSize": "14px",
+                                                                            },
+                                                                        ),
+                                                                        dbc.Popover(
+                                                                            [
+                                                                                dbc.PopoverHeader("Wind Power Curve Formula"),
+                                                                                dbc.PopoverBody(
+                                                                                    [
+                                                                                        html.P([
+                                                                                            html.Strong("Below cut-in speed:"), " Power = 0"
+                                                                                        ]),
+                                                                                        html.P([
+                                                                                            html.Strong("Ramp region (cut-in to rated):"),
+                                                                                            html.Br(),
+                                                                                            "Power = Rated MW × ((wind - cut_in) / (rated - cut_in))³"
+                                                                                        ]),
+                                                                                        html.P([
+                                                                                            html.Strong("Rated region (rated to cut-out):"),
+                                                                                            html.Br(),
+                                                                                            "Power = Rated MW × Max CF"
+                                                                                        ]),
+                                                                                        html.P([
+                                                                                            html.Strong("Above cut-out:"), " Power = 0 (safety shutdown)"
+                                                                                        ]),
+                                                                                        html.Hr(),
+                                                                                        html.P([
+                                                                                            html.Strong("Max Plant CF"), " accounts for wake losses, ",
+                                                                                            "availability (~97%), and spatial diversity. ",
+                                                                                            "Real wind farms rarely exceed 85-95% of nameplate."
+                                                                                        ], style={"fontSize": "12px", "color": "#5f6368"}),
+                                                                                    ]
+                                                                                ),
+                                                                            ],
+                                                                            target="power-curve-info",
+                                                                            trigger="click",
+                                                                            placement="right",
+                                                                        ),
+                                                                    ],
                                                                     style={
                                                                         "fontWeight": "700",
                                                                         "color": google_colors["red"],
@@ -918,9 +1022,22 @@ app.layout = html.Div(
                                                                     ),
                                                                     dbc.Col(
                                                                         [
-                                                                            dbc.Label("Notes"),
+                                                                            dbc.Label("Max plant CF (%)"),
+                                                                            dbc.Input(
+                                                                                id="max-plant-cf",
+                                                                                type="number",
+                                                                                value=90,
+                                                                                min=50,
+                                                                                max=100,
+                                                                                step=1,
+                                                                            ),
+                                                                        ]
+                                                                    ),
+                                                                    dbc.Col(
+                                                                        [
+                                                                            dbc.Label("Plant CF notes"),
                                                                             html.Div(
-                                                                                "We scale the hourly profile to hit your annual MWh using the average capacity factor.",
+                                                                                "Real wind farms rarely exceed 85-95% of nameplate due to wake losses, availability, and grid constraints.",
                                                                                 style={"color": "#5f6368", "fontSize": "13px"},
                                                                             ),
                                                                         ]
@@ -1444,6 +1561,7 @@ def poll_progress(_):
     Input("rated-speed", "value"),
     Input("cut-out", "value"),
     Input("turbine-mw", "value"),
+    Input("max-plant-cf", "value"),
     # Solar inputs
     Input("panel-tilt", "value"),
     Input("panel-azimuth", "value"),
@@ -1456,7 +1574,7 @@ def poll_progress(_):
     State("year-store", "data"),
     prevent_initial_call=True,
 )
-def update_analysis(json_data, cin, rated_spd, cout, turb_mw,
+def update_analysis(json_data, cin, rated_spd, cout, turb_mw, max_plant_cf,
                     panel_tilt, panel_azimuth, ilr, sys_eff, dc_cap,
                     target_mwh, loc, year):
     if json_data is None:
@@ -1536,11 +1654,13 @@ def update_analysis(json_data, cin, rated_spd, cout, turb_mw,
         )
     else:
         # Wind processing
-        if any(v is None for v in [cin, rated_spd, cout, turb_mw, target_mwh]):
+        if any(v is None for v in [cin, rated_spd, cout, turb_mw, max_plant_cf, target_mwh]):
             return dash.no_update, dash.no_update, dash.no_update
 
+        # Convert max_plant_cf from percentage to fraction
+        max_cf_frac = (max_plant_cf or 90) / 100.0
         df["power_mw"] = apply_power_curve(
-            df["wind_speed_100m"].values, cin, rated_spd, cout, turb_mw
+            df["wind_speed_100m"].values, cin, rated_spd, cout, turb_mw, max_cf_frac
         )
         df["cf"] = df["power_mw"] / turb_mw
 
@@ -1621,6 +1741,7 @@ def update_analysis(json_data, cin, rated_spd, cout, turb_mw,
     State("rated-speed", "value"),
     State("cut-out", "value"),
     State("turbine-mw", "value"),
+    State("max-plant-cf", "value"),
     # Solar inputs
     State("panel-tilt", "value"),
     State("panel-azimuth", "value"),
@@ -1633,7 +1754,7 @@ def update_analysis(json_data, cin, rated_spd, cout, turb_mw,
     State("year-store", "data"),
     prevent_initial_call=True,
 )
-def download_csv(n_clicks, json_data, cin, rated_spd, cout, turb_mw,
+def download_csv(n_clicks, json_data, cin, rated_spd, cout, turb_mw, max_plant_cf,
                  panel_tilt, panel_azimuth, ilr, sys_eff, dc_cap,
                  target_mwh, loc, year):
     """Separate callback for CSV download."""
@@ -1717,11 +1838,13 @@ def download_csv(n_clicks, json_data, cin, rated_spd, cout, turb_mw,
             filename = f"solar_hourly_shape_{year_val}_lat{lat:.2f}_lon{lon:.2f}.csv"
         else:
             # Wind processing
-            if any(v is None for v in [cin, rated_spd, cout, turb_mw, target_mwh]):
+            if any(v is None for v in [cin, rated_spd, cout, turb_mw, max_plant_cf, target_mwh]):
                 return dash.no_update, "Download failed: missing turbine or purchase inputs."
 
+            # Convert max_plant_cf from percentage to fraction
+            max_cf_frac = (max_plant_cf or 90) / 100.0
             df["power_mw"] = apply_power_curve(
-                df["wind_speed_100m"].values, cin, rated_spd, cout, turb_mw
+                df["wind_speed_100m"].values, cin, rated_spd, cout, turb_mw, max_cf_frac
             )
             df["cf"] = df["power_mw"] / turb_mw
 

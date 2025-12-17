@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: energy-shape-builder
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn google_wind_dash:server --bind 0.0.0.0:$PORT --workers 2 --threads 4
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.4
+      - key: DASH_USERNAME
+        sync: false  # You'll set this in Render dashboard
+      - key: DASH_PASSWORD
+        sync: false  # You'll set this in Render dashboard
+      - key: EE_PROJECT
+        sync: false  # Your Google Earth Engine project ID
+      - key: GOOGLE_APPLICATION_CREDENTIALS_JSON
+        sync: false  # Service account JSON (paste the whole JSON content)
