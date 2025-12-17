@@ -657,6 +657,9 @@ app = dash.Dash(
 app.title = "Energy Shape Builder"
 server = app.server
 
+# Set secret key for session management (required for auth)
+server.secret_key = os.environ.get("SECRET_KEY", os.urandom(24).hex())
+
 # Password protection - set DASH_USERNAME and DASH_PASSWORD environment variables
 # For local dev without auth, these default to None which disables auth
 dash_user = os.environ.get("DASH_USERNAME")
