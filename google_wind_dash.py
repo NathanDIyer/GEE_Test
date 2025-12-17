@@ -40,6 +40,7 @@ except ImportError:
 def init_ee():
     """Initialize Earth Engine - supports local credentials or service account for deployment."""
     import json
+    import tempfile
 
     project = os.environ.get("EE_PROJECT")
     sa_creds_json = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
@@ -47,20 +48,28 @@ def init_ee():
     if sa_creds_json:
         # Service account credentials provided as JSON string (for Render/cloud deployment)
         try:
+            # Parse to validate and extract email
             sa_creds = json.loads(sa_creds_json)
             service_email = sa_creds.get("client_email")
             print(f"[GEE] Attempting service account auth for: {service_email}")
             print(f"[GEE] Project: {project}")
 
+            # Write to temp file to avoid any string escaping issues
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+                json.dump(sa_creds, f)
+                key_file_path = f.name
+            print(f"[GEE] Wrote credentials to temp file: {key_file_path}")
+
             credentials = ee.ServiceAccountCredentials(
                 service_email,
-                key_data=sa_creds_json
+                key_file=key_file_path
             )
             ee.Initialize(credentials=credentials, project=project)
             print(f"[GEE] Successfully initialized with service account: {service_email}")
             return
         except json.JSONDecodeError as exc:
             print(f"[GEE] FATAL: Invalid JSON in GOOGLE_APPLICATION_CREDENTIALS_JSON: {exc}")
+            print(f"[GEE] First 100 chars of JSON: {sa_creds_json[:100] if sa_creds_json else 'empty'}")
             raise
         except Exception as exc:
             print(f"[GEE] FATAL: Service account init failed: {exc}")
