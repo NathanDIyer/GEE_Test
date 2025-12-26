@@ -308,3 +308,4 @@ For questions, feature requests, or bug reports, please open an issue or contact
 ---
 
 _Note: This tool is intended for screening-level analysis. For investment-grade resource assessments, use site-specific measurements and validated models._
+
