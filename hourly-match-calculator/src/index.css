@@ -1,0 +1,65 @@
+/* Leaflet CSS import - must be first */
+@import 'leaflet/dist/leaflet.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+/* Custom scrollbar for resource list */
+.resource-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.resource-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.resource-scroll::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.resource-scroll::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* Wind card styling */
+.wind-card {
+  border-left: 4px solid #3b82f6;
+  background: linear-gradient(to right, #eff6ff, #ffffff);
+}
+
+/* Solar card styling */
+.solar-card {
+  border-left: 4px solid #f59e0b;
+  background: linear-gradient(to right, #fffbeb, #ffffff);
+}
+
+/* Chart container */
+.chart-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* Loading spinner */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
