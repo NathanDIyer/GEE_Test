@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ERA5 Shaped Allocation for Hourly Energy Matching</title>
+<style>
+  :root {
+    --text: #202124;
+    --text-secondary: #5f6368;
+    --accent: #1a73e8;
+    --bg: #fff;
+    --border: #dadce0;
+    --code-bg: #f8f9fa;
+    --table-header: #f1f3f4;
+  }
+  * { box-sizing: border-box; }
+  html { font-size: 17px; scroll-behavior: smooth; }
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.7;
+    margin: 0;
+    padding: 0;
+  }
+  .container {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+  /* Typography */
+  h1 { font-size: 1.8rem; font-weight: 700; margin: 2rem 0 0.5rem; line-height: 1.3; }
+  h2 { font-size: 1.4rem; font-weight: 700; margin: 2.5rem 0 0.8rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 1.15rem; font-weight: 600; margin: 2rem 0 0.6rem; }
+  h4 { font-size: 1.0rem; font-weight: 600; margin: 1.5rem 0 0.5rem; }
+  p { margin: 0 0 1rem; }
+  strong { font-weight: 600; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  blockquote {
+    border-left: 3px solid var(--accent);
+    margin: 1rem 0;
+    padding: 0.5rem 1rem;
+    color: var(--text-secondary);
+    background: var(--code-bg);
+  }
+  /* Abstract box */
+  #abstract + p, .abstract {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.2rem 1.5rem;
+    font-size: 0.92rem;
+    line-height: 1.65;
+  }
+  /* Tables */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0 1.5rem;
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+  thead th {
+    background: var(--table-header);
+    font-weight: 600;
+    text-align: left;
+    padding: 0.5rem 0.7rem;
+    border-bottom: 2px solid var(--border);
+  }
+  tbody td {
+    padding: 0.4rem 0.7rem;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr:hover { background: #f8f9fa; }
+  /* Code */
+  code {
+    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+    font-size: 0.85em;
+    background: var(--code-bg);
+    padding: 0.15em 0.35em;
+    border-radius: 3px;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem;
+    overflow-x: auto;
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; }
+  /* Figures */
+  figure, .figure {
+    margin: 1.5rem 0;
+    text-align: center;
+  }
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  figcaption {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    font-style: italic;
+  }
+  /* Math */
+  .math { overflow-x: auto; }
+  /* Lists */
+  ul, ol { margin: 0 0 1rem; padding-left: 1.5rem; }
+  li { margin-bottom: 0.3rem; }
+  /* Emphasis for key results */
+  em { font-style: italic; }
+  /* Print */
+  @media print {
+    body { font-size: 11pt; }
+    .container { max-width: 100%; padding: 0; }
+    h2 { break-before: page; }
+    table { font-size: 9pt; }
+  }
+  /* Mobile */
+  @media (max-width: 600px) {
+    html { font-size: 15px; }
+    .container { padding: 1rem; }
+    table { font-size: 0.8rem; }
+    thead th, tbody td { padding: 0.3rem 0.4rem; }
+  }
+  /* Nav bar */
+  .paper-nav {
+    position: sticky;
+    top: 0;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    padding: 0.5rem 1.5rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .paper-nav a { color: var(--text-secondary); }
+  .paper-nav a:hover { color: var(--accent); }
+  .paper-nav .title { font-weight: 600; color: var(--text); }
+</style>
+<!-- KaTeX for math rendering -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script>document.addEventListener("DOMContentLoaded", function() { if (typeof renderMathInElement !== "undefined") renderMathInElement(document.body, {delimiters: [{left: "\\[", right: "\\]", display: true},{left: "\\(", right: "\\)", display: false}]}); });</script>
+</head>
+<body>
+<nav class="paper-nav">
+  <span class="title">ERA5 Shaped Allocation</span>
+  <a href="#abstract">Abstract</a>
+  <a href="#introduction">1. Intro</a>
+  <a href="#data-and-methods">2. Methods</a>
+  <a href="#results">3. Results</a>
+  <a href="#discussion">4. Discussion</a>
+  <a href="#conclusions">5. Conclusions</a>
+</nav>
+<div class="container">
+<h1 id="era5-shaped-allocation-for-hourly-matching-how-much-do-you-need-to-know">ERA5 Shaped Allocation for Hourly Matching: How Much Do You Need to Know?</h1>
+<h2 id="abstract">Abstract</h2>
+<p>For flat (baseload) consumption profiles, hourly matching scores—the key metric for granular energy certificate markets—depend primarily on the cumulative distribution of generation values rather than on which specific hours are windy. This insight, validated across 27 UK wind farms (24 offshore, 3 onshore), a 134-turbine Chinese continental site, and a US Great Plains onshore farm, means that ERA5 reanalysis data can reconstruct accurate hourly generation profiles for certificate allocation even without metered data. With a manufacturer-specific power curve (Tier 3), shaped allocation achieves a mean matching score error of 2.8 [2.0–3.8] percentage points (pp, i.e., absolute difference in matching score expressed as a percentage; 95% bootstrap CI), with 70% of farms within ±3 pp and 87% within ±5 pp. An averaged manufacturer curve for the offshore sector (leave-one-out validated) achieves 2.6 [2.0–3.3] pp—closing ~96% of the gap between Tier 0 (7.4 pp) and the manufacturer curve (2.4 pp) without any turbine-specific knowledge. Results use flat (baseload) load profiles throughout; commercial, residential, and industrial profiles show qualitatively similar patterns.</p>
+<p>Spatial and temporal robustness are surprisingly strong. Using wind data from 100 km away adds less than 0.5 pp error. Using a prior year’s wind data (with near-zero hourly correlation to the actual year) produces only 1–4 pp error, while naive multi-year hour-by-hour averaging produces 10 [8.7–11.0] pp error because it compresses the generation distribution. A preliminary test on the SDWPF Chinese continental dataset confirms that Tier 3 accuracy transfers cross-geography (±4.5 pp), though this single-site result does not establish generalization. The averaged curve also generalizes to an onshore farm (Hill of Towie) using a turbine model absent from the curve set, achieving 1.8 pp—demonstrating cross-turbine transferability. A fully blind test on a US Great Plains farm (turbine model unknown) achieves 5.8 pp with the averaged offshore curve—confirming that curve shape, not wind data quality, is the binding constraint.</p>
+<p>Distribution-preserving averaging methods completely eliminate the naive averaging penalty: Weibull parameter averaging achieves 1.9 [1.1–2.8] pp with 3 years and 1.7 [1.2–2.2] pp with 10+ years—surpassing concurrent-year accuracy (2.3 pp). Duration curve averaging and quantile mapping achieve ~2.2 pp. Naive averaging worsens to 16 pp at 20 years, demonstrating that more data helps distribution-preserving methods and hurts time-domain methods. Monthly vs. annual production totals improve accuracy by ~0.4 pp. A two-parameter generic power curve—requiring no manufacturer data—can be optimized to 1.9 pp (rated wind speed = 13.5 m/s, exponent = 1.75) across a diverse 28-farm fleet, outperforming even the averaged manufacturer curve, because the sub-cubic exponent better approximates the generation distribution produced by real turbines. For practitioners: an optimized generic curve reduces allocation error from 7 pp to 2 pp with no turbine information at all, while knowing the exact location or year barely matters—because matching scores depend primarily on the shape of the generation distribution rather than on which hours are windy.</p>
+<hr />
+<h2 id="introduction">1. Introduction</h2>
+<h3 id="the-hourly-matching-problem">1.1 The Hourly Matching Problem</h3>
+<p>The transition toward 24/7 carbon-free energy (CFE) and granular energy certificates requires tracking not just <em>how much</em> renewable energy a generator produces, but <em>when</em> it produces it. The hourly matching score—defined as the fraction of load that can be covered by generation in each hour—has become a key metric for procurement and regulatory compliance. The EU Delegated Regulation 2023/1184 requires hourly temporal correlation for renewable hydrogen (RFNBO) additionality claims, with full hourly matching mandated from 2030 (European Commission 2023). More broadly, the Renewable Energy Directive III (European Parliament 2023) strengthens guarantees of origin, though it does not itself mandate hourly granularity for general certificates. The EnergyTag GC Scheme Standard V2 (2024) specifies hourly metered data as the primary basis for granular certificate issuance, with provisions for modeled data under defined conditions. Google’s 24/7 CFE methodology (Google 2021) introduced the hourly CFE% metric now adopted by corporate buyers worldwide, using settlement-quality metered data rather than modeled profiles. These frameworks create demand for hourly generation profiles but do not specify accuracy thresholds for modeled data—a gap this study addresses.</p>
+<p>However, obtaining verified hourly generation profiles for individual wind farms presents a significant practical barrier. While total annual or monthly production is widely reported (e.g., through ENTSO-E, Elexon, or the EIA), hourly profiles are often proprietary, inconsistently formatted, or simply unavailable. This gap is particularly acute for:</p>
+<ul>
+<li><strong>Portfolio managers</strong> evaluating generation-load alignment across many assets</li>
+<li><strong>Certificate issuers</strong> needing to allocate granular certificates without metered data</li>
+<li><strong>Regulators</strong> designing hourly matching frameworks with imperfect data availability</li>
+<li><strong>Researchers</strong> studying fleet-level matching dynamics across hundreds of sites</li>
+</ul>
+<h3 id="what-does-good-enough-mean">1.2 What Does “Good Enough” Mean?</h3>
+<p>No regulatory or market body has defined an explicit accuracy threshold for modeled hourly profiles. The ±3 pp and ±5 pp thresholds used throughout this paper are proposed by the authors as reasonable benchmarks, not compliance standards. We adopt ±3 pp as the primary benchmark for three reasons: (a) 3 pp on a typical 60% matching score represents ~5% relative error; (b) this is well within load-side measurement uncertainty and metering granularity effects; and (c) it is sufficient to distinguish meaningfully different generation profiles for procurement decisions. For context: at the Tier 3 level (manufacturer curve), 48% of farms achieve ±2 pp accuracy, 70% achieve ±3 pp, and 78% achieve ±4 pp—so the choice of threshold materially affects what fraction of farms “pass.” We also report ±5 pp as a secondary threshold.</p>
+<h3 id="shaped-allocation">1.3 Shaped Allocation</h3>
+<p>Shaped allocation offers a solution: if you know a generator’s total production over a period and can model a plausible hourly <em>shape</em>, you can reconstruct the hourly profile by scaling the modeled shape to match the known total:</p>
+<p><span class="math display">P_{\text{shaped}}(t) = P_{\text{model}}(t) \times \frac{\sum P_{\text{metered}}}{\sum P_{\text{model}}(t)}</span></p>
+<p>This approach requires: 1. <strong>Weather data</strong> to drive a generation model (here, ERA5 reanalysis wind data) 2. <strong>A power curve</strong> to convert wind speeds to generation 3. <strong>A known total</strong> (annual, quarterly, or monthly) to calibrate the scale</p>
+<p>The practical question is: <strong>How much information do you need to make this work?</strong></p>
+<h3 id="research-questions">1.4 Research Questions</h3>
+<p>We address seven questions through systematic sensitivity analysis:</p>
+<ol type="1">
+<li><strong>Power curve sensitivity (Tier 0–3)</strong>: How much does knowing the turbine’s power curve matter? Can technology-class average curves close the gap?</li>
+<li><strong>Spatial sensitivity</strong>: How much error does using wind data from a nearby (but wrong) location introduce?</li>
+<li><strong>Temporal sensitivity</strong>: Can historical average wind profiles substitute for concurrent-year data?</li>
+<li><strong>Scaling period sensitivity</strong>: How much does monthly vs. annual production reporting help?</li>
+<li><strong>Cross-geography generalization</strong>: Do results transfer from UK offshore to Chinese continental sites?</li>
+<li><strong>Averaging method sensitivity</strong>: If multi-year historical data must be combined, does the averaging method matter?</li>
+<li><strong>Historical window length</strong>: How many years of data are needed, and does more data always help?</li>
+</ol>
+<h3 id="contributions">1.5 Contributions</h3>
+<p>This study provides the first systematic validation of ERA5 shaped allocation specifically for <em>hourly matching score accuracy</em>—the metric that matters for granular certificate markets. A substantial body of work has validated ERA5 for wind resource assessment: Olauson (2018) identified ERA5 as a step-change improvement over previous reanalyses for wind power modeling; Ramon et al. (2019) compared global reanalyses for near-surface wind representation; Staffell &amp; Pfenninger (2016) demonstrated bias-corrected reanalysis techniques for simulating wind power output; Gualtieri (2022) assessed reanalysis reliability against tall tower measurements; Gruber et al. (2022) provided multi-country validation of wind power simulations from MERRA-2 and ERA5; Hayes et al. (2021) developed long-term offshore wind generation models; Davidson &amp; Millstein (2022) documented limitations of reanalysis data for wind power applications; Peña-Sánchez et al. (2025) validated ERA5 wind speeds globally; and Gandoin &amp; Garza (2024) identified systematic underestimation of strong offshore winds in ERA5. These studies focus on energy yield estimation, capacity factor prediction, or wind speed accuracy. We show that matching score accuracy has fundamentally different sensitivities than these traditional metrics, leading to counterintuitive findings about which information matters most.</p>
+<hr />
+<h2 id="data-and-methods">2. Data and Methods</h2>
+<h3 id="era5-reanalysis-data">2.1 ERA5 Reanalysis Data</h3>
+<p>ERA5 is the fifth-generation atmospheric reanalysis dataset produced by the European Centre for Medium-Range Weather Forecasts (ECMWF), providing hourly estimates of atmospheric variables on a 0.25° × 0.25° (~27 km) global grid from 1940 to present (Hersbach et al. 2020). The effective spatial resolution is approximately 60–80 km—coarser than the grid spacing—due to spectral truncation in the underlying model. This distinction is relevant to interpreting the spatial sensitivity results in Section 3.2: nearby farms within the same ERA5 grid cell share identical wind data, and even farms 30–60 km apart may experience partial grid aliasing.</p>
+<p>We extract hourly data via Google Earth Engine (collection ECMWF/ERA5/HOURLY) at each farm location, computing: - Wind speed at 100 m and 10 m from u/v components - Wind shear exponent (diagnostic): <span class="math inline">\alpha = \ln(ws_{100}/ws_{10}) / \ln(100/10)</span>. This is computed as a diagnostic for characterizing the ERA5 boundary layer but is not used for hub height extrapolation. Hub height extrapolation (Tiers 1–3) uses a fixed <span class="math inline">\alpha = 1/7</span> power law, following standard industry practice (IEC 61400-12-1). Note that the ERA5 10 m wind is a model diagnostic variable (not an independent observation), so shear exponents derived from the 100 m / 10 m ratio reflect the model’s boundary layer parameterization rather than observed wind profiles - Air density: <span class="math inline">\rho = P / (R_d \times T)</span> (from surface pressure and 2 m temperature). The IEC 61400-12-1 density correction (<span class="math inline">v_{\text{norm}} = v \times (\rho / \rho_{\text{ref}})^{1/3}</span>) is implemented but not applied in the primary offshore validation because the correction magnitude is small for North Sea conditions: mean ERA5 density across the 24 offshore farms is ~1.24 kg/m³ vs. the reference 1.225 kg/m³, producing a ~±1% wind speed adjustment that has negligible effect on matching scores. Density correction is applied for the SDWPF validation (Section 3.5), where the ~1,400 m elevation produces ~15% lower density and a ~5% wind speed adjustment. Note: this uses the dry-air gas constant (<span class="math inline">R_d</span> = 287.05 J/(kg·K)); humidity correction via virtual temperature is not applied, introducing an approximation of ~1% in moist maritime conditions</p>
+<p>Data is extracted using parallelized time-slice queries (60 chunks per year, 20 concurrent workers) to stay within GEE’s 2,000-point-per-query limit, yielding 8,760–8,784 hourly records per site-year.</p>
+<h3 id="metered-datasets">2.2 Metered Datasets</h3>
+<table>
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 14%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 16%" />
+<col style="width: 22%" />
+<col style="width: 8%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Dataset</th>
+<th>Location</th>
+<th>N Farms</th>
+<th>Terrain</th>
+<th>Resolution</th>
+<th>Rated Capacity</th>
+<th>Year</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Dryad North Sea</td>
+<td>UK</td>
+<td>24</td>
+<td>Offshore</td>
+<td>30-min</td>
+<td>50–1,218 MW</td>
+<td>2020</td>
+</tr>
+<tr class="even">
+<td>Kelmarsh</td>
+<td>UK</td>
+<td>1 (6 turbines)</td>
+<td>Flat onshore</td>
+<td>10-min SCADA</td>
+<td>12.3 MW</td>
+<td>2020</td>
+</tr>
+<tr class="odd">
+<td>Penmanshiel</td>
+<td>Scotland</td>
+<td>1 (14 turbines)</td>
+<td>Complex onshore</td>
+<td>10-min SCADA</td>
+<td>28.7 MW</td>
+<td>2020</td>
+</tr>
+<tr class="even">
+<td>Hill of Towie</td>
+<td>Scotland</td>
+<td>1 (21 turbines)</td>
+<td>Complex onshore</td>
+<td>10-min SCADA</td>
+<td>48.3 MW</td>
+<td>2020</td>
+</tr>
+<tr class="odd">
+<td>SDWPF</td>
+<td>China</td>
+<td>1 (134 turbines)</td>
+<td>Continental</td>
+<td>10-min SCADA</td>
+<td>201 MW</td>
+<td>2020–21</td>
+</tr>
+<tr class="even">
+<td>US Great Plains</td>
+<td>US (South Dakota)</td>
+<td>1 (unknown turbines)</td>
+<td>Flat onshore</td>
+<td>Hourly</td>
+<td>~95 MW</td>
+<td>2024</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Dryad North Sea</strong>: Half-hourly MWh production for 31 UK offshore wind farms from the Dryad data repository. After excluding 4 farms without 2020 production data (Galloper, HornseaTwo, MorayEast, Seagreen), 2 farms without 2020 metered data (SheringhamShoals, TritonKnoll), and 1 commissioning-year anomaly (Kincardine: only 4,152 MWh from 50 MW capacity), we validated 24 offshore farms. Farm specifications (coordinates, hub heights, turbine models) were compiled from 4C Offshore. Hub heights range from 75 m (Barrow) to 113 m (Hornsea One), bracketing the ERA5 100 m reference height.</p>
+<p><strong>Kelmarsh and Penmanshiel</strong>: Open-access wind farm SCADA datasets from Zenodo, providing turbine-level 10-minute data aggregated to farm-level hourly totals.</p>
+<p><strong>Hill of Towie</strong>: A 21-turbine onshore wind farm in Aberdeenshire, Scotland (57.5°N, 3.1°W), using Siemens SWT-2.3-VS-82 turbines (2.3 MW, 82 m rotor, 59 m hub height, 435 W/m² specific power). Grid-level 10-minute SCADA data from Zenodo (record 14870023), aggregated to hourly farm totals. This dataset adds a third onshore site with a turbine model (and manufacturer) not represented in the offshore fleet, testing cross-turbine generalization of the averaged manufacturer curve. Hill of Towie results are reported separately (Section 3.9) and not included in the fleet-level statistics in Table 1.</p>
+<p><strong>SDWPF</strong>: The Spatial Dynamic Wind Power Forecasting dataset from the KDD Cup 2022, featuring 134 identical Sinovel SL1500/82 turbines on a plateau in continental China (~1,400 m elevation). Uniquely, this dataset includes ERA5 weather data alongside the SCADA records. ERA5 wind data for SDWPF is at 10 m above ground level, requiring power-law extrapolation to the 70 m hub height—unlike the UK offshore datasets where ERA5 100 m wind is used directly.</p>
+<h3 id="sample-definitions-by-analysis">2.2.1 Sample Definitions by Analysis</h3>
+<p>Different analyses use different subsets of the available farms. Table 0 summarizes the sample composition for each analysis to aid reproducibility:</p>
+<table>
+<colgroup>
+<col style="width: 30%" />
+<col style="width: 9%" />
+<col style="width: 24%" />
+<col style="width: 36%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Analysis</th>
+<th>N</th>
+<th>Sample</th>
+<th>Exclusions</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Tiers 0–2</td>
+<td>26</td>
+<td>24 offshore + Kelmarsh + Penmanshiel</td>
+<td>Kincardine (commissioning)</td>
+</tr>
+<tr class="even">
+<td>Tier 3</td>
+<td>23</td>
+<td>21 offshore + Kelmarsh + Penmanshiel</td>
+<td>+ Aberdeen, Ormonde, Rampion (no mfr curve)</td>
+</tr>
+<tr class="odd">
+<td>Spatial sensitivity</td>
+<td>22</td>
+<td>22 offshore</td>
+<td>Kincardine + onshore farms excluded</td>
+</tr>
+<tr class="even">
+<td>Temporal/averaging</td>
+<td>5</td>
+<td>Beatrice, HornseaOne, Lincs, Galloper, WestermostRough</td>
+<td>Extended ERA5 history available</td>
+</tr>
+<tr class="odd">
+<td>LOO averaged curve</td>
+<td>24</td>
+<td>24 offshore</td>
+<td>Kincardine excluded</td>
+</tr>
+<tr class="even">
+<td>Stacking Config B</td>
+<td>4</td>
+<td>Beatrice, HornseaOne, Lincs, WestermostRough</td>
+<td>Subset of temporal/averaging with 2020 metered</td>
+</tr>
+<tr class="odd">
+<td>Load profile comparison</td>
+<td>23</td>
+<td>21 offshore + Kelmarsh + Penmanshiel</td>
+<td>Same as Tier 3</td>
+</tr>
+<tr class="even">
+<td>2021 out-of-sample</td>
+<td>5</td>
+<td>Same as temporal/averaging</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>Hill of Towie cross-validation</td>
+<td>1</td>
+<td>Hill of Towie (SWT-2.3-82)</td>
+<td>Separate cross-turbine test</td>
+</tr>
+<tr class="even">
+<td>US Great Plains blind validation</td>
+<td>1</td>
+<td>Anonymized ~95 MW US onshore farm</td>
+<td>Turbine model unknown; 2024 data</td>
+</tr>
+<tr class="odd">
+<td>Generic curve parameter sweep</td>
+<td>28</td>
+<td>24 offshore + Kelmarsh + Penmanshiel + Hill of Towie + US Great Plains</td>
+<td>Full fleet</td>
+</tr>
+</tbody>
+</table>
+<h3 id="power-curve-models">2.3 Power Curve Models</h3>
+<p>We implement four tiers of power curve knowledge:</p>
+<p><strong>Tier 0 (Generic)</strong>: A normalized cubic curve—<span class="math inline">P = ((v - v_{\text{cut-in}}) / (v_{\text{rated}} - v_{\text{cut-in}}))^3</span> in the below-rated region—parameterized assuming 350 W/m² specific power, using ERA5 wind at 100 m (no hub height extrapolation). This is not a true aerodynamic <span class="math inline">v^3</span> curve but a heuristic that maps wind speed to capacity factor via the normalized speed ratio. This represents the minimum information scenario.</p>
+<p><strong>Tier 1 (Hub Height)</strong>: Same generic curve but with wind speed extrapolated from ERA5 100 m to actual hub height using the power law.</p>
+<p><strong>Tier 2 (Specific Power)</strong>: A generic curve parameterized with the farm’s actual specific power (W/m²), with hub height extrapolation.</p>
+<p><strong>Tier 3 (Manufacturer Curve)</strong>: The actual manufacturer power curve for each turbine model (8 offshore models implemented: Siemens SWT-3.6-107, SWT-3.6-120, SWT-6.0-154, SWT-7.0-154, Vestas V90-3.0, MHI Vestas V164-8.0, V164-9.5, SG 8.0-167, plus Senvion MM82/MM92 and Siemens SWT-2.3-82 for onshore and Sinovel SL1500 for SDWPF). Gaussian smoothing (<span class="math inline">\sigma = 0.5</span> m/s) is applied to simulate farm-level aggregation effects.</p>
+<h3 id="shaped-allocation-procedure">2.4 Shaped Allocation Procedure</h3>
+<p>For each farm and tier: 1. Extract hourly ERA5 wind speed at the farm location 2. Optionally extrapolate to hub height (Tiers 1–3) 3. Apply power curve to obtain modeled hourly capacity factor 4. Convert to MWh: <span class="math inline">P_{\text{model}}(t) = CF(t) \times P_{\text{rated}}</span> 5. Scale to match metered total: <span class="math inline">P_{\text{shaped}}(t) = P_{\text{model}}(t) \times [\sum P_{\text{metered}} / \sum P_{\text{model}}]</span> 6. Calculate matching scores against four load profiles</p>
+<h3 id="matching-score-metric">2.5 Matching Score Metric</h3>
+<p>The hourly matching score is:</p>
+<p><span class="math display">\text{Match} = \frac{\sum_{t=1}^{8760} \min(G(t), L(t))}{\sum_{t=1}^{8760} L(t)}</span></p>
+<p>where <span class="math inline">G(t)</span> is the shaped allocation output (generation scaled to match the known metered total via Section 2.4 step 5) and <span class="math inline">L(t)</span> is the hourly load profile scaled to the same annual total. Both are in MWh. We test four load profiles: - <strong>Flat (24/7)</strong>: Constant baseload (data center) - <strong>Commercial</strong>: Weekday day-peak, weekend trough - <strong>Residential</strong>: Evening peak pattern - <strong>Industrial</strong>: Three-shift pattern</p>
+<p>The matching score error is: <span class="math inline">\text{Error} = \text{Match}_{\text{shaped}} - \text{Match}_{\text{metered}}</span> (percentage points).</p>
+<h3 id="secondary-metrics">2.6 Secondary Metrics</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Metric</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Pearson r</td>
+<td>Hourly correlation between shaped and metered profiles</td>
+</tr>
+<tr class="even">
+<td>RMSE</td>
+<td>Root mean square error of hourly capacity factor</td>
+</tr>
+<tr class="odd">
+<td>Duration curve RMSE</td>
+<td>Error in generation value distribution</td>
+</tr>
+<tr class="even">
+<td>Diurnal bias</td>
+<td>Systematic hour-of-day errors</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="results">3. Results</h2>
+<h3 id="baseline-validation-power-curve-sensitivity">3.1 Baseline Validation: Power Curve Sensitivity</h3>
+<p>All results in this section use the flat (24/7 baseload) load profile unless otherwise noted. Kincardine is excluded from all tiers due to commissioning-year anomalies (only 4,152 MWh from 50 MW capacity). Table 1 summarizes results across 26 UK farms (Tiers 0–2) and the 23-farm subset with manufacturer curves (Tier 3):</p>
+<table>
+<thead>
+<tr class="header">
+<th>Tier</th>
+<th>Information Known</th>
+<th>N Farms</th>
+<th>Mean</th>
+<th>Error</th>
+<th>(pp) [95% CI]</th>
+<th>Within ±3 pp [95% CI]</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>Location + total only</td>
+<td>26</td>
+<td>7.3 [6.4–8.3]</td>
+<td>4% [0–12%]</td>
+<td>19% [4–35%]</td>
+<td>0.89</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>+ Hub height</td>
+<td>26</td>
+<td>7.9 [6.9–8.9]</td>
+<td>4% [0–12%]</td>
+<td>12% [0–23%]</td>
+<td>0.89</td>
+</tr>
+<tr class="odd">
+<td>2</td>
+<td>+ Specific power</td>
+<td>26</td>
+<td>8.8 [7.8–9.8]</td>
+<td>0% [0–0%]</td>
+<td>4% [0–12%]</td>
+<td>0.88</td>
+</tr>
+<tr class="even">
+<td>3</td>
+<td>+ Manufacturer curve</td>
+<td>23</td>
+<td><strong>2.8 [2.0–3.8]</strong></td>
+<td><strong>70% [48–87%]</strong></td>
+<td><strong>87% [74–100%]</strong></td>
+<td>0.90</td>
+</tr>
+</tbody>
+</table>
+<p>All results in this section and throughout use the flat (24/7 baseload) load profile unless otherwise noted. Table 1b shows Tier 3 results across all four load profiles:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Load Profile</th>
+<th>Mean</th>
+<th>Error</th>
+<th>(pp)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Flat (24/7)</td>
+<td>2.8</td>
+<td>70%</td>
+<td>87%</td>
+</tr>
+<tr class="even">
+<td>Commercial</td>
+<td>1.7</td>
+<td>78%</td>
+<td>96%</td>
+</tr>
+<tr class="odd">
+<td>Residential</td>
+<td>2.6</td>
+<td>65%</td>
+<td>91%</td>
+</tr>
+<tr class="even">
+<td>Industrial</td>
+<td>2.7</td>
+<td>70%</td>
+<td>91%</td>
+</tr>
+</tbody>
+</table>
+<p>The flat profile is the most conservative case because it weights all hours equally, placing maximum sensitivity on the generation CDF. Time-varying profiles are 0.1–1.1 pp more forgiving: commercial loads (weekday daytime peak) systematically avoid high-error nighttime hours when ERA5 wind overestimates generation. The fact that all four profiles produce similar accuracy (within ~1 pp) provides empirical support for the CDF-based explanation—but the improvement for commercial loads shows that temporal structure does matter at the margin for non-flat profiles. Flat load results are used throughout as the conservative benchmark.</p>
+<p><strong>Key finding</strong>: The manufacturer power curve is the dominant factor. Tier 3 reduces mean absolute error from 7.3 pp (Tier 0) to 2.8 pp—a 62% reduction. Tiers 1 and 2 provide no improvement and actually <em>worsen</em> results, for reasons discussed below. Three farms lack manufacturer curve data (Aberdeen, Ormonde, Rampion), hence the reduced Tier 3 sample size.</p>
+<p><strong>Why Tiers 1 and 2 degrade accuracy</strong>: Hub heights in our offshore dataset range from 75 m (Barrow) to 113 m (Hornsea One). Of the 24 offshore farms, 12 have hub heights below 90 m—where power-law extrapolation from ERA5’s 100 m reference <em>reduces</em> the effective wind speed, exacerbating the generic curve’s tendency to produce too-peaky profiles. Five farms have hub heights near 100 m (90–105 m), where extrapolation has minimal effect. Seven farms have hub heights above 105 m, where extrapolation <em>increases</em> wind speed and may push values into the flat region of the power curve, causing saturation. In all cases, the fixed <span class="math inline">\alpha = 1/7</span> power law used for hub height extrapolation carries substantial uncertainty—particularly offshore where stability-dependent boundary layer effects produce shear profiles that the power law poorly represents (Davidson &amp; Millstein 2022). ERA5-derived shear exponents (computed from the 100 m / 10 m diagnostic winds) show considerable variability but are not used for extrapolation due to the 10 m wind’s status as a model diagnostic rather than an independent observation. Any extrapolation amplifies wind speed uncertainty without improving the underlying generic curve shape.</p>
+<p>For Tier 2, using the correct specific power with a normalized cubic curve parameterization shifts the curve’s rated wind speed. At high-specific-power sites (&gt;350 W/m²), this pushes rated wind speed higher, making the profile more peaky—the opposite of the intended improvement. This counterintuitive result underscores that the <em>shape</em> of the power curve matters more than its parameterization.</p>
+<p><strong>Systematic negative bias at Tier 0</strong>: The generic curve produces too-peaky generation profiles (concentrating generation in fewer high-wind hours), systematically understating matching scores by 5–12 pp. This is because a single generic curve cannot capture the diversity of cut-in speeds, rated wind speeds, and plateau shapes across different turbine models.</p>
+<p><strong>Unmodeled operational effects</strong>: The 2.8 pp Tier 3 error implicitly includes unmodeled curtailment, wake losses, and availability effects that are present in metered data but absent from the ERA5-based model. Systematic curtailment during high-wind periods (e.g., grid congestion or negative pricing events) would compress the upper tail of the metered duration curve. The effect on matching score accuracy is ambiguous: compression of high-generation hours could either increase or decrease the matching score depending on whether those hours exceed load. The shaped allocation’s scaling step absorbs symmetric losses but not temporal patterns in curtailment.</p>
+<h3 id="spatial-sensitivity">3.2 Spatial Sensitivity</h3>
+<p>We test spatial robustness through cross-farm ERA5 substitution: for each of 22 offshore farms, we compute the shaped allocation using ERA5 wind data from every other farm (462 cross-farm comparisons plus 22 self-comparisons).</p>
+<table>
+<thead>
+<tr class="header">
+<th>Distance</th>
+<th>N Pairs</th>
+<th>Additional</th>
+<th>Error</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Self (0 km)</td>
+<td>22</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>1–30 km</td>
+<td>30</td>
+<td>+0.2 [−0.4 to +0.8] pp</td>
+<td>0.004</td>
+</tr>
+<tr class="odd">
+<td>30–60 km</td>
+<td>20</td>
+<td>+0.1 [−0.4 to +0.7] pp</td>
+<td>0.032</td>
+</tr>
+<tr class="even">
+<td>60–100 km</td>
+<td>52</td>
+<td>+0.5 [−0.2 to +1.1] pp</td>
+<td>0.067</td>
+</tr>
+<tr class="odd">
+<td>100–200 km</td>
+<td>44</td>
+<td>+0.2 [−0.5 to +0.9] pp</td>
+<td>0.160</td>
+</tr>
+<tr class="even">
+<td>200–500 km</td>
+<td>274</td>
+<td>+0.9 [+0.6 to +1.1] pp</td>
+<td>0.325</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Grid cell sharing caveat</strong>: The 22 farms occupy only 16 unique ERA5 grid cells (0.25° resolution). In the 1–30 km bin, 14 of 30 pairs (47%) share the same grid cell and thus have <em>identical</em> ERA5 wind data. Beyond 30 km, all pairs have independent grid cells. The spatial robustness result at &lt;30 km is therefore partly trivial; the more meaningful result is that error remains &lt;0.5 pp at 60–100 km, where all pairs have genuinely independent ERA5 data.</p>
+<p><strong>Key finding</strong>: Matching score error is remarkably robust to spatial displacement. Using wind data from 100 km away adds less than 0.5 pp of error. In contrast, Pearson correlation degrades more sharply. This divergence occurs because matching scores depend on the <em>statistical distribution</em> of generation values (how many hours are at high vs. low output), not on their specific timing. Wind speed distributions are spatially coherent over larger scales than hour-to-hour wind patterns.</p>
+<p><strong>Practical implication</strong>: For granular certificate purposes, approximate coordinates (within ~100 km) are sufficient.</p>
+<h3 id="temporal-sensitivity">3.3 Temporal Sensitivity</h3>
+<p>We test whether historical wind data can substitute for concurrent-year data using 5 representative farms with ERA5 from 2017–2020 (Table 3):</p>
+<table>
+<thead>
+<tr class="header">
+<th>Wind Data Source</th>
+<th>Mean</th>
+<th>Error</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Concurrent year (2020)</td>
+<td>2.3 [1.3–3.1]</td>
+<td>0.940</td>
+</tr>
+<tr class="even">
+<td>Prior year (2018)</td>
+<td>1.1 [0.6–1.7]</td>
+<td>0.095</td>
+</tr>
+<tr class="odd">
+<td>Prior year (2019)</td>
+<td>2.0 [1.0–2.9]</td>
+<td>0.081</td>
+</tr>
+<tr class="even">
+<td>Prior year (2017)</td>
+<td>4.0 [2.6–5.3]</td>
+<td>0.095</td>
+</tr>
+<tr class="odd">
+<td>Multi-year average (2017–19)¹</td>
+<td><strong>10.0 [8.7–11.0]</strong></td>
+<td>0.170</td>
+</tr>
+</tbody>
+</table>
+<p>¹ We use “multi-year average” rather than the industry term “P50” throughout. Standard P50 estimation involves 10–20 years of data with measure-correlate-predict (MCP) correction, which differs from the naive hour-by-hour averaging tested here.</p>
+<p><strong>Key finding—counterintuitive</strong>: Using a <em>wrong</em> year’s wind data produces better matching scores than using a naive multi-year average. Prior years have near-zero hourly correlation (r ≈ 0.08) but maintain natural wind variability, yielding only 1–4 pp error. The multi-year average, by contrast, smooths hour-to-hour variability, producing an artificially flat generation profile that systematically overstates matching scores by ~10 pp.</p>
+<p><strong>Mechanistic explanation</strong>: Matching score is determined by the cumulative distribution function (CDF) of generation values, not by which specific hours have high or low output. A single year’s wind data—even from the wrong year—preserves the correct wind speed distribution (Weibull shape), producing a generation CDF that closely matches reality. Multi-year averaging narrows the distribution, reducing the variance of hourly generation, and causing more hours to exceed load—inflating the matching score.</p>
+<p><strong>Practical implication</strong>: For matching score estimation, <strong>any single year of ERA5 data is preferable to a naive multi-year average</strong>. The best approach remains using the concurrent year, but if unavailable, a recent individual year is far better than naive averaging. However, as we show in Section 3.6, distribution-preserving averaging methods can recover the accuracy lost by naive averaging.</p>
+<h3 id="scaling-period-sensitivity">3.4 Scaling Period Sensitivity</h3>
+<p>We test matching accuracy when production totals are known at annual, quarterly, or monthly resolution (23 Tier 3 farms, excluding Kincardine, flat load profile):</p>
+<table>
+<thead>
+<tr class="header">
+<th>Scaling Period</th>
+<th>Mean</th>
+<th>Error</th>
+<th>(pp) [95% CI]</th>
+<th>Within ±3 pp [95% CI]</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Annual</td>
+<td>2.8 [2.0–3.8]</td>
+<td>70% [52–87%]</td>
+<td>87% [70–100%]</td>
+<td>0.90</td>
+</tr>
+<tr class="even">
+<td>Quarterly</td>
+<td>2.5 [1.7–3.5]</td>
+<td>74% [57–91%]</td>
+<td>91% [78–100%]</td>
+<td>0.92</td>
+</tr>
+<tr class="odd">
+<td>Monthly</td>
+<td>2.4 [1.6–3.3]</td>
+<td>78% [61–91%]</td>
+<td>91% [78–100%]</td>
+<td>0.92</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key finding</strong>: Monthly scaling provides moderate improvement (~0.4 pp mean, +8 percentage points in ±3 pp compliance) over annual. The biggest gain comes from annual to quarterly (captures seasonal wind patterns). Beyond quarterly, diminishing returns set in because intra-month variability is not captured by scaling.</p>
+<p><strong>Special case—partial production years</strong>: For commissioning or decommissioning years, quarterly or monthly scaling is critical. One farm (Kincardine) in its commissioning year showed 28.6 pp error with annual scaling but only 4.5 pp with quarterly—because sub-annual totals correctly represent the periods when the farm was operational.</p>
+<h3 id="cross-geography-sdwpf-china">3.5 Cross-Geography: SDWPF China</h3>
+<p>As a preliminary test of cross-geography applicability, we validate against the SDWPF dataset—a 134-turbine Chinese continental farm at ~1,400 m elevation. This single-site test cannot establish generalization but provides initial evidence of transferability beyond the UK North Sea.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Tier</th>
+<th>2021 Flat Error (pp)</th>
+<th>2021 r</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1 (generic, +extrapolation)</td>
+<td>-12.3</td>
+<td>0.687</td>
+</tr>
+<tr class="even">
+<td>2 (SP=284, +extrapolation)</td>
+<td>-10.5</td>
+<td>0.712</td>
+</tr>
+<tr class="odd">
+<td>3 (Sinovel curve, +extrapolation)</td>
+<td><strong>+4.5</strong></td>
+<td><strong>0.760</strong></td>
+</tr>
+</tbody>
+</table>
+<p><em>Note: The SDWPF dataset bundles ERA5 wind at 10 m only; in practice, a user would fetch ERA5 100 m data directly, requiring minimal extrapolation to the 70 m hub height. The results above use 10 m → 70 m power-law extrapolation—a pessimistic scenario that overstates the extrapolation uncertainty a real-world user would face.</em></p>
+<p><strong>Key differences from UK offshore</strong>: 1. <strong>Lower correlation</strong>: r = 0.76 (vs. 0.89–0.95 for UK offshore), reflecting greater micro-scale terrain variability in continental settings that ERA5’s ~60–80 km effective resolution cannot capture. 2. <strong>Manufacturer curve still essential</strong>: Tier 3 reduces error from 12 pp (generic) to 4.5 pp, confirming the importance of turbine-specific information across geographies. 3. <strong>Matching score is reasonable despite low correlation</strong>: Despite much lower hourly correlation, Tier 3 achieves within ±5 pp accuracy—further evidence that matching accuracy depends on distribution shape rather than timing. 4. <strong>Results are likely pessimistic</strong>: With ERA5 100 m data (available in any real deployment), extrapolation from 100 m down to 70 m would introduce far less uncertainty than the 10 m → 70 m extrapolation imposed by this dataset.</p>
+<h3 id="distribution-preserving-averaging-methods">3.6 Distribution-Preserving Averaging Methods</h3>
+<p>Section 3.3 showed that naive hour-by-hour multi-year averaging destroys the generation distribution, inflating matching scores by ~10 pp. However, the underlying problem is not with multi-year data per se, but with <em>how</em> it is combined. Hour-by-hour arithmetic averaging narrows the wind speed distribution: a windy hour in one year gets averaged with a calm hour in another, pulling values toward the mean. This compresses the generation CDF—the very quantity that determines matching scores.</p>
+<p>We test nine alternative averaging methods to determine which preserve the distribution shape and recover the accuracy lost by naive averaging. All methods use the same 2017–2019 ERA5 data for the same 5 representative farms as Section 3.3, with Tier 3 power curves and flat load profile. Methods involving randomness (bootstrap, Weibull sampling) are run 50 times each and averaged.</p>
+<p><strong>Methods tested</strong>:</p>
+<p><em>Time-domain averaging (compress the CDF):</em></p>
+<ol type="1">
+<li><p><strong>Naive hour-by-hour average (wind)</strong>: Average wind speeds hour-by-hour across years, then apply power curve.</p></li>
+<li><p><strong>Hour-by-hour average (generation)</strong>: Apply the power curve to each year independently, then average generation profiles hour-by-hour.</p></li>
+</ol>
+<p><em>Distribution-preserving (nonparametric):</em></p>
+<ol start="3" type="1">
+<li><p><strong>Duration curve averaging</strong>: Sort each year’s generation independently, average at each rank position, randomly assign to hours.</p></li>
+<li><p><strong>Bootstrap resampling</strong>: Pool all ~26,280 hourly generation values, randomly sample 8,784.</p></li>
+<li><p><strong>Rank-preserving average</strong>: Use the most recent year’s (2019) temporal ordering with duration-curve-averaged values at corresponding ranks.</p></li>
+<li><p><strong>Seasonal duration curves</strong>: Duration curve averaging applied within each calendar month separately, preserving seasonal patterns.</p></li>
+</ol>
+<p><em>Distribution-correcting (applied to the naive multi-year average):</em></p>
+<ol start="7" type="1">
+<li><p><strong>Quantile mapping</strong>: Take the naive-averaged wind profile and remap each value through the pooled historical CDF—converting each averaged wind speed to its percentile rank, then looking up the corresponding value in the single-year distribution.</p></li>
+<li><p><strong>Variance re-inflation</strong>: Linearly rescale the naive-averaged generation deviations to restore the average single-year standard deviation.</p></li>
+</ol>
+<p><em>Parametric:</em></p>
+<ol start="9" type="1">
+<li><strong>Weibull parameter averaging</strong>: Fit a Weibull distribution (shape <span class="math inline">k</span>, scale <span class="math inline">\lambda</span>) to each year’s wind speeds, average the parameters, generate 8,784 synthetic wind speeds from the averaged distribution. Weibull goodness-of-fit across the 5 farms and 21 years (105 site-years) shows: shape parameter <span class="math inline">k</span> ranges from 2.03 to 2.59 (mean 2.27, inter-annual CV ~4%), scale parameter <span class="math inline">\lambda</span> ranges from 8.8 to 11.4 m/s (mean 10.2, inter-annual CV ~3%). K-S tests reject the Weibull null at <span class="math inline">p &lt; 0.05</span> for approximately half of site-years (66/105), indicating modest but systematic deviations from a pure Weibull, possibly concentrated in the upper tail, where ERA5’s spectral truncation is known to compress extreme wind speeds (Gandoin &amp; Garza 2024), though the K-S test does not localize the deviation. However, the parametric fit need only capture the distributional <em>width</em> accurately (which determines the generation CDF), not match the tails exactly. The low inter-annual CV in both parameters (~3–4%) explains why averaging parameters across years is effective: the wind climate is remarkably stable from year to year, with scale (<span class="math inline">\lambda</span>, i.e., mean wind speed) varying more than shape (<span class="math inline">k</span>, i.e., distribution breadth). Note that arithmetic averaging of Weibull parameters is a heuristic—the average of two Weibull distributions is not itself Weibull—but the approximation works well because inter-annual parameter variation is small relative to the parameter values.</li>
+</ol>
+<table>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>Mean</th>
+<th>Error</th>
+<th>(pp) [95% CI]</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Weibull parameter averaging</strong></td>
+<td><strong>1.9 [1.1–2.8]</strong></td>
+<td>—</td>
+<td>Parametric</td>
+</tr>
+<tr class="even">
+<td>Quantile mapping</td>
+<td>2.2 [1.0–3.3]</td>
+<td>0.94</td>
+<td>CDF-correcting</td>
+</tr>
+<tr class="odd">
+<td>Bootstrap resampling</td>
+<td>2.2 [1.1–3.3]</td>
+<td>—</td>
+<td>Distribution-preserving</td>
+</tr>
+<tr class="even">
+<td>Duration curve averaging</td>
+<td>2.2 [1.1–3.4]</td>
+<td>—</td>
+<td>Distribution-preserving</td>
+</tr>
+<tr class="odd">
+<td>Rank-preserving averaging</td>
+<td>2.2 [1.1–3.4]</td>
+<td>—</td>
+<td>Distribution-preserving</td>
+</tr>
+<tr class="even">
+<td>Concurrent year (reference)</td>
+<td>2.3 [1.3–3.1]</td>
+<td>0.93</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>Seasonal duration curves</td>
+<td>3.0 [1.9–4.2]</td>
+<td>—</td>
+<td>Distribution-preserving</td>
+</tr>
+<tr class="even">
+<td>Variance re-inflation</td>
+<td>5.6 [4.0–6.9]</td>
+<td>0.86</td>
+<td>Variance-correcting</td>
+</tr>
+<tr class="odd">
+<td>Naive hour-by-hour avg (wind)</td>
+<td>10.0 [8.7–11.0]</td>
+<td>0.74</td>
+<td>Time-domain</td>
+</tr>
+<tr class="even">
+<td>Hour-by-hour avg (generation)</td>
+<td>16.1 [15.1–17.1]</td>
+<td>0.59</td>
+<td>Time-domain</td>
+</tr>
+</tbody>
+</table>
+<p><em>Std Ratio = standard deviation of shaped profile / standard deviation of metered profile. Values below 1.0 indicate distribution compression. Only shown for methods with deterministic temporal structure.</em></p>
+<p><strong>Note on multiple comparisons</strong>: The top 5 distribution-preserving methods (Weibull, quantile mapping, bootstrap, duration curve, rank-preserving) have heavily overlapping confidence intervals and are not statistically distinguishable at N = 5 farms. The recommendation of Weibull parameter averaging below is based on its slight numerical advantage and parametric simplicity (only two parameters per year need to be stored and averaged), not on demonstrated statistical superiority over the other distribution-preserving methods.</p>
+<p><strong>Key findings</strong>:</p>
+<p><strong>Five methods achieve ~2.2 pp or better—matching or exceeding the concurrent year (2.3 pp).</strong> Duration curve averaging, bootstrap resampling, rank-preserving averaging, and quantile mapping all achieve ~2.2 pp, while Weibull parameter averaging achieves 1.9 pp. All five completely eliminate the ~10 pp naive averaging penalty.</p>
+<p><strong>Weibull parameter averaging is the best-performing method (1.9 pp), slightly exceeding even the concurrent year.</strong> However, Weibull averaging shows a systematic positive bias: the signed mean error is +1.6 pp (4 of 5 farms positive), indicating a tendency to overstate matching scores. The concurrent year shows a similar but smaller positive bias (+2.3 pp signed mean). This is because the parametric Weibull fit averages out year-specific sampling noise in the wind speed distribution. With only two parameters per year (shape <span class="math inline">k</span> and scale <span class="math inline">\lambda</span>), the averaged Weibull produces a “cleaner” generation CDF than any single year’s 8,760 observed values. This result has a practical implication: for matching score purposes, the Weibull parameters from a few historical years contain more useful information than a full year of concurrent hourly wind data.</p>
+<p><strong>Quantile mapping restores the distribution almost perfectly.</strong> The std ratio of 0.94 (vs. 0.74 for naive averaging) shows that remapping through the historical CDF nearly completely reverses the compression. Quantile mapping also preserves the temporal structure of the naive-averaged profile (diurnal and seasonal patterns), which is irrelevant for matching score but useful for other applications.</p>
+<p><strong>Rank-preserving averaging is identical to duration curve averaging (both 2.2 pp).</strong> Whether you use the most recent year’s temporal ordering or a random shuffle, the matching score is the same. This is a direct confirmation that matching scores depend only on the generation CDF, not on which hours the values are assigned to.</p>
+<p><strong>Seasonal duration curves are worse than whole-year (3.0 pp vs. 2.2 pp).</strong> Constraining the averaging to within each month introduces noise when the per-month sample size is small (730 hours × 3 years per month). The whole-year duration curve, drawing on 8,760 × 3 hours, produces a more stable CDF estimate.</p>
+<p><strong>Averaging generation is worse than averaging wind (16.1 [15.1–17.1] pp vs. 10.0 [8.7–11.0] pp).</strong> The power curve’s nonlinearity (cubic below rated, flat above) compresses the generation distribution more than the wind distribution. Averaging the already-compressed generation values narrows the CDF further (std ratio 0.59 vs. 0.74).</p>
+<p><strong>Variance re-inflation is a partial fix (5.6 pp).</strong> Restoring the correct variance halves the naive averaging error but does not recover accuracy fully. The <em>shape</em> of the CDF—not just its width—matters: rescaling preserves the compressed shape even as it widens it.</p>
+<p><strong>The random hour assignment in duration curve averaging has zero effect on matching scores.</strong> Across 50 trials per farm, the standard deviation of matching error was &lt; 0.01 pp.</p>
+<p><strong>Practical implication</strong>: When multi-year wind data must be combined, <strong>fit a Weibull to each year and average the parameters</strong>, or alternatively <strong>average the duration curves, not the time series</strong>. Both approaches completely eliminate the distribution compression that makes naive hour-by-hour averaging unusable for matching score calculations.</p>
+<h3 id="historical-window-length-sensitivity">3.7 Historical Window Length Sensitivity</h3>
+<p>The results in Section 3.6 used only 3 years of historical data (2017–2019). A natural question is: does more historical data improve accuracy? We extend the ERA5 history to 20 years (2000–2019) for the same 5 representative farms and test how averaging method accuracy changes with 3, 5, 10, 15, and 20 years of input data.</p>
+<table>
+<colgroup>
+<col style="width: 9%" />
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 18%" />
+<col style="width: 18%" />
+<col style="width: 18%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>3 yr [95% CI]</th>
+<th>5 yr [95% CI]</th>
+<th>10 yr [95% CI]</th>
+<th>15 yr [95% CI]</th>
+<th>20 yr [95% CI]</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Weibull param avg</td>
+<td>1.9 [1.1–2.8]</td>
+<td>1.9 [1.4–2.6]</td>
+<td><strong>1.7 [1.2–2.2]</strong></td>
+<td>1.8 [1.2–2.5]</td>
+<td><strong>1.7 [1.2–2.3]</strong></td>
+</tr>
+<tr class="even">
+<td>Bootstrap resampling</td>
+<td>2.2 [1.1–3.3]</td>
+<td>2.1 [1.2–3.1]</td>
+<td>1.9 [1.2–2.6]</td>
+<td>2.1 [1.2–2.9]</td>
+<td>1.9 [1.1–2.6]</td>
+</tr>
+<tr class="odd">
+<td>Duration curve avg</td>
+<td>2.2 [1.1–3.4]</td>
+<td>2.2 [1.1–3.3]</td>
+<td>2.0 [1.2–2.8]</td>
+<td>2.1 [1.1–3.0]</td>
+<td>1.9 [1.1–2.8]</td>
+</tr>
+<tr class="even">
+<td>Quantile mapping</td>
+<td>2.2 [1.0–3.3]</td>
+<td>2.1 [1.2–3.0]</td>
+<td>1.9 [1.2–2.6]</td>
+<td>2.0 [1.2–2.9]</td>
+<td>1.9 [1.1–2.6]</td>
+</tr>
+<tr class="odd">
+<td>Concurrent year (ref)</td>
+<td>2.3</td>
+<td>2.3</td>
+<td>2.3</td>
+<td>2.3</td>
+<td>2.3</td>
+</tr>
+<tr class="even">
+<td>Variance re-inflation</td>
+<td>5.6 [4.0–6.9]</td>
+<td>6.4 [4.9–7.7]</td>
+<td>6.6 [5.0–7.8]</td>
+<td>6.9 [5.3–8.2]</td>
+<td>6.2 [4.5–7.5]</td>
+</tr>
+<tr class="odd">
+<td>Naive avg (wind)</td>
+<td>10.0 [8.7–11.0]</td>
+<td>12.7 [11.3–13.5]</td>
+<td>14.9 [13.6–15.8]</td>
+<td>16.2 [15.0–17.2]</td>
+<td>16.1 [14.9–17.1]</td>
+</tr>
+<tr class="even">
+<td>Naive avg (generation)</td>
+<td>16.1 [15.1–17.1]</td>
+<td>19.6 [18.4–20.5]</td>
+<td>22.1 [21.0–23.2]</td>
+<td>23.5 [22.4–24.6]</td>
+<td>23.7 [22.5–24.7]</td>
+</tr>
+</tbody>
+</table>
+<p><em>All values are mean |matching score error| in percentage points [95% bootstrap CI] across 5 farms.</em></p>
+<p><strong>Key findings</strong>:</p>
+<p><strong>Naive hour-by-hour averaging gets dramatically worse with more years (10 pp → 16 pp).</strong> This is the opposite of conventional wisdom: more data <em>hurts</em> when using time-domain averaging. Each additional year adds more hour-by-hour cancellation, further compressing the wind speed distribution. At 20 years, the naive averaging error is 60% higher than at 3 years.</p>
+<p><strong>Distribution-preserving methods improve modestly, with diminishing returns after ~10 years.</strong> Weibull parameter averaging improves from 1.9 pp (3 years) to 1.7 pp (10 years), then plateaus. Duration curve averaging follows the same pattern (2.2 → 2.0 → 1.9 pp). The improvement from 3 to 10 years is ~0.3 pp; from 10 to 20 years, essentially zero.</p>
+<p><strong>With 10+ years, all four distribution-preserving methods beat the concurrent year.</strong> At 10 years, Weibull (1.7 pp), bootstrap (1.9 pp), duration curve (2.0 pp), and quantile mapping (1.9 pp) all surpass the concurrent year reference (2.3 pp). The parametric Weibull fit benefits most because averaging more years’ Weibull parameters produces an increasingly accurate estimate of the site’s true long-term wind distribution.</p>
+<p><strong>Variance re-inflation remains ineffective regardless of window length (~5.6–6.9 pp).</strong> Restoring the correct width without fixing the CDF shape is insufficient at any number of years.</p>
+<p><strong>Practical implication</strong>: A 10-year historical window is the practical sweet spot: enough data for the parametric and nonparametric methods to beat the concurrent year, without the diminishing returns of longer histories. Even 3 years suffices for distribution-preserving methods to match concurrent-year accuracy—the method matters far more than the amount of history.</p>
+<h3 id="power-curve-default-sensitivity">3.8 Power Curve Default Sensitivity</h3>
+<p>The results above consistently show that knowing the turbine model is the single most important factor for matching score accuracy—but turbine information is often unavailable, particularly for portfolio-level analysis across hundreds of sites. Can better <em>default</em> power curves close the gap between Tier 0 (normalized cubic, 7.4 pp) and Tier 3 (manufacturer curve, 2.4 pp)?</p>
+<p><strong>The averaged manufacturer curve.</strong> We construct a single “average offshore turbine” curve by averaging the 8 unique manufacturer power curves in our dataset (each evaluated on a fine wind speed grid and normalized to capacity factor). To prevent information leakage, we use leave-one-out (LOO) validation: for each farm, the average excludes the curve used by that farm. Because many farms share the same turbine model (e.g., 7 farms use the SWT-3.6-107), a per-farm LOO still leaves curves from identical turbines in the average. We therefore also test leave-one-<em>curve</em>-out (LOCC) validation, which removes all instances of the farm’s turbine model from the average. LOCC produces mean |error| of 2.61 pp vs. LOO-farm’s 2.76 pp—<em>slightly better</em> because equal-weighting 7 unique curves produces a more diverse average than instance-weighting 26 curves. The maximum degradation from LOO to LOCC is 0.34 pp (at farms using the SWT-6.0-154, which appears in 5 farms). The LOO average achieves <strong>2.6 pp mean |error|</strong>—closing ~96% of the gap between Tier 0 (7.4 pp) and the specific manufacturer curve (2.4 pp), and within 0.2 pp of knowing the exact turbine. Adding hub height extrapolation further improves this to <strong>2.3 pp</strong> (75% within ±3 pp, 92% within ±5 pp).</p>
+<table>
+<colgroup>
+<col style="width: 6%" />
+<col style="width: 14%" />
+<col style="width: 29%" />
+<col style="width: 24%" />
+<col style="width: 24%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Tier</th>
+<th>Description</th>
+<th>Mean</th>
+<th>Error</th>
+<th>[95% CI]</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Blind (Tier 0)</td>
+<td>Normalized cubic, SP=350, no HH</td>
+<td>7.4 pp</td>
+<td>0%</td>
+<td>17%</td>
+</tr>
+<tr class="even">
+<td>Know “offshore”</td>
+<td>Averaged mfr curve (LOO), no HH</td>
+<td>2.6 [2.0–3.3] pp</td>
+<td>62% [42–79%]</td>
+<td>88% [75–100%]</td>
+</tr>
+<tr class="odd">
+<td>Know hub height</td>
+<td>Averaged mfr curve (LOO) + HH extrap</td>
+<td>2.3 [1.8–2.9] pp</td>
+<td>75% [58–92%]</td>
+<td>92% [79–100%]</td>
+</tr>
+<tr class="even">
+<td>Know SP class</td>
+<td>Normalized cubic at correct SP, no HH</td>
+<td>8.3 pp</td>
+<td>0%</td>
+<td>8%</td>
+</tr>
+<tr class="odd">
+<td>Know turbine (Tier 3)</td>
+<td>Manufacturer curve + HH</td>
+<td>2.4 pp</td>
+<td>76%</td>
+<td>90%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Knowing the specific power makes things worse, not better.</strong> The “know SP class” tier—using the correct specific power with the normalized cubic curve—produces 8.3 pp error, <em>worse than blind</em>. This confirms that the normalized cubic curve <em>shape</em> is the fundamental problem: it dramatically underestimates power in the critical 5–11 m/s range regardless of its SP parameterization. The SP sensitivity sweep shows that the fleet-optimal SP is 200 W/m² (far below any real turbine), not because 200 W/m² is physically correct but because lowering SP shifts the normalized cubic’s rated wind speed down toward the range where its shape best approximates real turbine behavior.</p>
+<p><strong>Hub height extrapolation: it depends on the curve.</strong> For the averaged manufacturer curve and Tier 3, hub height extrapolation provides a modest improvement (~0.3 pp) because these curves have the right shape and benefit from the refined wind speed input. For the normalized cubic, extrapolation makes things <em>worse</em> (+0.6 pp) because the wrong curve shape amplifies rather than corrects the wind speed adjustment.</p>
+<p><strong>Implications.</strong> The averaged manufacturer curve effectively makes turbine-specific information optional for offshore wind. A practitioner who knows only that a farm is “offshore” can achieve 2.6 pp accuracy using a sector-average curve—comparable to full turbine knowledge (2.4 pp). This suggests that constructing technology-class-specific average curves (onshore low-wind, onshore high-wind, offshore conventional, offshore floating) could eliminate the need for turbine-specific information across most wind farms.</p>
+<p><strong>Caveat: next-generation turbines.</strong> The averaged curve result is validated on 3.6–8.0 MW turbines commissioned between 2005 and 2018. As the offshore sector transitions to 12–15+ MW machines with larger rotors, higher hub heights, and different aerodynamic designs, the averaged curve would need updating with representative curves from these newer platforms. The curve-count sensitivity result (Section 3.10.1) provides some reassurance that even 3 curves suffice—but this has not been tested with turbine architectures fundamentally different from the 3–8 MW class in our sample.</p>
+<figure>
+<img src="figures/fig20_power_curve_sensitivity.png" alt="Figure 20: Power curve sensitivity — tier gradation, SP sweep, curve overlay">
+<figcaption>
+Figure 20: Power curve sensitivity — tier gradation, SP sweep, curve overlay
+</figcaption>
+</figure>
+<h4 id="generic-curve-parameter-sweep">3.8.1 Generic Curve Parameter Sweep</h4>
+<p>The normalized cubic’s poor performance raises a natural question: can a better-parameterized generic curve—requiring no manufacturer data at all—close the gap? The standard generic curve has two free parameters beyond the fixed cut-in speed (3.0 m/s): the rated wind speed <span class="math inline">V_r</span> and the curve exponent <span class="math inline">n</span>:</p>
+<p><span class="math display">CF(V) = \left(\frac{V - V_{cut-in}}{V_r - V_{cut-in}}\right)^n \quad \text{for } V_{cut-in} \leq V &lt; V_r; \quad CF = 1.0 \text{ for } V \geq V_r</span></p>
+<p>We sweep <span class="math inline">V_r</span> from 8.0 to 15.0 m/s (0.5 m/s steps) and <span class="math inline">n</span> from 1.0 to 4.0 (0.25 steps)—195 combinations—evaluated on all 28 farms with metered data (24 Dryad offshore, plus Kelmarsh, Penmanshiel, Hill of Towie, and the US Great Plains farm). ERA5 100m wind speeds are used directly without hub height extrapolation, consistent with the Tier 0 philosophy of requiring only location and total production.</p>
+<p><strong>The fleet-optimal generic curve dramatically outperforms the conventional default.</strong> The minimum fleet-wide mean |error| occurs at <span class="math inline">V_r</span> = 13.5 m/s, <span class="math inline">n</span> = 1.75, achieving <strong>1.9 pp</strong>—a 75% reduction from the Tier 0 default (7.6 pp) and, remarkably, lower than both the averaged manufacturer curve (2.6 pp, LOO) and the farm-specific manufacturer curve (2.8 pp, Tier 3). The error landscape (Figure 27a) reveals a broad valley of acceptable performance: the entire region with <span class="math inline">V_r</span> ≥ 12 m/s and <span class="math inline">n</span> between 1.5 and 2.0 achieves errors below 3 pp. The current Tier 0 default (rated_ws ≈ 12 m/s, cubic exponent) sits at 7.6 pp—well outside this valley, in the high-error region where steep cubic curves systematically underestimate mid-range generation.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Curve Approach</th>
+<th>Mean</th>
+<th>Error</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Tier 0 default (SP=350, cubic)</td>
+<td>7.6</td>
+<td>28</td>
+</tr>
+<tr class="even">
+<td><strong>Optimized generic</strong> (<span class="math inline">V_r</span>=13.5, <span class="math inline">n</span>=1.75)</td>
+<td><strong>1.9</strong></td>
+<td>28</td>
+</tr>
+<tr class="odd">
+<td>Averaged mfr curve (LOO)</td>
+<td>2.6</td>
+<td>24</td>
+</tr>
+<tr class="even">
+<td>Tier 3 (manufacturer curve)</td>
+<td>2.8</td>
+<td>24</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The optimal exponent is sub-cubic.</strong> The aerodynamic power law predicts cubic dependence on wind speed, but the matching-score-optimal exponent is 1.75—substantially lower. This is not physically inconsistent: the matching score depends on the <em>shape</em> of the generation distribution, not on the physical relationship between wind speed and power. A flatter, more gradual ramp-up curve (low exponent, high rated wind speed) produces an hourly generation distribution that better approximates the true distribution from real turbines with their smooth, S-shaped power curves. The conventional cubic overestimates the steepness of the power ramp, concentrating generation too narrowly around rated output.</p>
+<p><strong>Offshore vs. onshore optimal parameters differ.</strong> The offshore-only optimal (24 farms) is identical to the fleet optimum: <span class="math inline">V_r</span> = 13.5 m/s, <span class="math inline">n</span> = 1.75, at 1.5 pp. The onshore-only optimal (4 farms) shifts to <span class="math inline">V_r</span> = 15.0 m/s, <span class="math inline">n</span> = 1.75, at 3.9 pp. The higher rated wind speed for onshore is consistent with ERA5 100m wind speeds being closer to (or above) typical onshore hub heights (59–90 m), meaning the effective wind distribution at hub height would place rated power at a higher 100m-equivalent wind speed. Per-farm optimal parameters vary widely (<span class="math inline">V_r</span> from 8.5 to 14.5 m/s, <span class="math inline">n</span> from 1.5 to 4.0), confirming that no single generic curve is universally optimal—but the fleet optimum is robust.</p>
+<p><strong>Practitioner recommendation.</strong> For shaped allocation with no turbine information, replace the conventional SP=350 cubic default with <span class="math inline">V_r</span> = 13.5 m/s, <span class="math inline">n</span> = 1.75, cut-in = 3.0 m/s. This simple change—requiring no manufacturer data, no hub height, and no knowledge of turbine class—reduces mean matching score error from 7.6 to 1.9 pp across a diverse 28-farm fleet spanning UK offshore, UK onshore, Scottish complex terrain, and US Great Plains sites.</p>
+<figure>
+<img src="figures/fig27_generic_curve_sweep.png" alt="Figure 27: Generic curve parameter sweep — heatmap and comparison">
+<figcaption>
+Figure 27: Generic curve parameter sweep — heatmap and comparison
+</figcaption>
+</figure>
+<h3 id="stacking-the-full-recipe">3.9 Stacking: The Full Recipe</h3>
+<p>Sections 3.4, 3.6–3.8 each showed that individual improvements—monthly scaling, Weibull averaging, and the averaged manufacturer curve—reduce matching score error independently. Here we test whether these improvements <em>compound</em> when applied together, using two fleet configurations:</p>
+<p><strong>Configuration A: 24 offshore farms, concurrent 2020 ERA5.</strong> The averaged manufacturer curve (LOO) with monthly scaling (“avg + monthly”) is tested against the averaged curve with annual scaling (“avg + annual”) and the manufacturer curve baselines. This uses the same 2020 ERA5 data as the baseline validation (Section 3.1), so no wind data synthesis is involved.</p>
+<p><strong>Configuration B: 4 offshore farms with 10-year ERA5 history (2010–2019).</strong> The full stack combines the averaged manufacturer curve, Weibull parameter averaging (10 years), and monthly scaling. This configuration tests the complete “blind” pipeline: no turbine information, no concurrent-year weather data, and only monthly production totals.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Configuration</th>
+<th>Curve</th>
+<th>Wind Source</th>
+<th>Scaling</th>
+<th>Mean</th>
+<th>Error</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>A</td>
+<td>Avg mfr (LOO)</td>
+<td>Concurrent 2020</td>
+<td>Annual</td>
+<td>2.29</td>
+<td>24</td>
+</tr>
+<tr class="even">
+<td>A</td>
+<td>Avg mfr (LOO)</td>
+<td>Concurrent 2020</td>
+<td>Monthly</td>
+<td><strong>1.91</strong></td>
+<td>24</td>
+</tr>
+<tr class="odd">
+<td>A</td>
+<td>Manufacturer</td>
+<td>Concurrent 2020</td>
+<td>Annual</td>
+<td>2.40</td>
+<td>21</td>
+</tr>
+<tr class="even">
+<td>A</td>
+<td>Manufacturer</td>
+<td>Concurrent 2020</td>
+<td>Monthly</td>
+<td>2.04</td>
+<td>21</td>
+</tr>
+<tr class="odd">
+<td>B</td>
+<td>Avg mfr (LOO)</td>
+<td>Weibull 10yr</td>
+<td>Annual</td>
+<td>1.66</td>
+<td>4</td>
+</tr>
+<tr class="even">
+<td>B</td>
+<td>Avg mfr (LOO)</td>
+<td>Weibull 10yr</td>
+<td>Monthly</td>
+<td><strong>1.31</strong></td>
+<td>4</td>
+</tr>
+<tr class="odd">
+<td>B</td>
+<td>Manufacturer</td>
+<td>Weibull 10yr</td>
+<td>Annual</td>
+<td>1.50</td>
+<td>4</td>
+</tr>
+<tr class="even">
+<td>B</td>
+<td>Manufacturer</td>
+<td>Weibull 10yr</td>
+<td>Monthly</td>
+<td>1.24</td>
+<td>4</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key findings</strong>:</p>
+<p><strong>Improvements compound.</strong> The averaged curve with monthly scaling (1.91 pp, 24 farms) outperforms the manufacturer curve with annual scaling (2.40 pp, 21 farms). Monthly scaling adds ~0.4 pp improvement regardless of curve choice. The full blind stack (1.31 pp, 4 farms) approaches the limits of the methodology.</p>
+<p><strong>The averaged curve outperforms the manufacturer curve.</strong> Across both configurations, the LOO-averaged curve consistently beats the farm-specific manufacturer curve (by ~0.2–0.3 pp). This surprising result occurs because the averaged curve, by averaging across turbine types, produces a smoother power curve that is less sensitive to ERA5 wind speed biases—analogous to how ensemble models often outperform individual members.</p>
+<p><strong>Onshore results are nuanced.</strong> The offshore averaged curve applied to Kelmarsh (flat terrain, UK onshore) achieves 0.65 pp error—remarkably good. Penmanshiel (complex terrain) shows 10.8 pp error regardless of curve choice, suggesting ERA5’s terrain-resolution limitation. However, Hill of Towie—also classified as complex Scottish onshore terrain, with a completely different turbine family (Siemens SWT-2.3-82, not in the offshore LOO curve set)—achieves 0.09 pp at Tier 3 and 1.77 pp with the LOO-averaged curve (0.22 pp with hub height extrapolation). This demonstrates that the averaged curve generalizes across turbine manufacturers and terrain types, and that Penmanshiel’s poor result reflects site-specific conditions rather than a general onshore limitation.</p>
+<h3 id="robustness-checks">3.10 Robustness Checks</h3>
+<p>Three additional analyses test the robustness of the results above.</p>
+<h4 id="curve-count-sensitivity">3.10.1 Curve Count Sensitivity</h4>
+<p>The averaged manufacturer curve in Section 3.8 uses 8 unique offshore power curves. Would fewer curves suffice? We test subsets of <span class="math inline">k = 3, 4, \ldots, 8</span> curves (50 random draws per <span class="math inline">k</span>, LOO validation applied within each subset) on the 24-farm fleet:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Curves in Average (<span class="math inline">k</span>)</th>
+<th>Mean</th>
+<th>Error</th>
+<th>(pp)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>3</td>
+<td>2.31</td>
+<td>0.25</td>
+<td>1.79–2.78</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>2.27</td>
+<td>0.19</td>
+<td>1.87–2.67</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>2.29</td>
+<td>0.14</td>
+<td>1.97–2.63</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>2.28</td>
+<td>0.11</td>
+<td>2.05–2.53</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>2.30</td>
+<td>0.09</td>
+<td>2.15–2.42</td>
+</tr>
+<tr class="even">
+<td>8 (all)</td>
+<td>2.29</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Even 3 curves produce 2.3 pp accuracy—essentially identical to 8.</strong> The mean barely changes with <span class="math inline">k</span>; only the variance decreases (from ±0.25 pp at <span class="math inline">k=3</span> to ±0.09 pp at <span class="math inline">k=7</span>). This is because the critical 5–11 m/s region of the power curve is similar across modern offshore turbines regardless of size class: all exhibit steep initial ramp, gradual approach to rated power, and a plateau. The worst-case draw at <span class="math inline">k=3</span> (2.78 pp) is still better than Tier 0 by a factor of 2.7. This result implies that the averaged curve methodology does not require an extensive turbine library—a handful of representative curves from any modern offshore turbines would suffice.</p>
+<h4 id="out-of-sample-year-2021">3.10.2 Out-of-Sample Year (2021)</h4>
+<p>The baseline validation uses 2020 as both the ERA5 wind year and the metered validation target. To test out-of-sample generalization, we validate against 2021 metered production for 5 farms with 10-year ERA5 history. Weibull parameters come from 2010–2019 (no 2021 ERA5 is used). We also test “stale” 2020 ERA5 as a near-concurrent proxy (1 year old).</p>
+<table>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>2020 Mean</th>
+<th>Error</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Avg + concurrent ERA5 + annual</td>
+<td>1.84</td>
+<td>5.63 (stale 2020 ERA5)</td>
+</tr>
+<tr class="even">
+<td>Avg + concurrent ERA5 + monthly</td>
+<td>1.51</td>
+<td>5.09 (stale 2020 ERA5)</td>
+</tr>
+<tr class="odd">
+<td>Avg + Weibull 10yr + annual</td>
+<td>1.66</td>
+<td>4.39</td>
+</tr>
+<tr class="even">
+<td>Avg + Weibull 10yr + monthly</td>
+<td><strong>1.31</strong></td>
+<td><strong>3.34</strong></td>
+</tr>
+</tbody>
+</table>
+<p>2021 errors are systematically higher than 2020 by 2–4 pp. Beatrice shows the largest degradation (0.67 → 6.83 pp), while Galloper remains excellent (— → 0.91 pp) and Westermost Rough shows moderate degradation (3.90 → 0.75 pp). The mean 2021 full-stack error (3.34 pp) is higher than 2020 (1.31 pp) but still within ±5 pp for 4 of 5 farms.</p>
+<p><strong>Interpretation</strong>: The 2020 results benefit from partial in-sample fitting: the ERA5 data for the concurrent year captures the actual wind regime that produced the metered output. The 2021 results—where no 2021 weather data is used—represent the genuinely blind scenario. The increase from 1.3 to 3.3 pp is expected: it reflects year-to-year variability in wind patterns relative to the 10-year climatology. Beatrice’s large 2021 error likely reflects an atypical wind year or operational changes (curtailment, outages) not captured by the climatological Weibull. The 3.3 pp out-of-sample result is a more conservative (and arguably more honest) estimate of the methodology’s accuracy in a truly prospective application.</p>
+<h4 id="bootstrap-confidence-intervals">3.10.3 Bootstrap Confidence Intervals</h4>
+<p>All headline results throughout this paper include 95% bootstrap confidence intervals computed by resampling the farm set (10,000 iterations with replacement). Key intervals for the flat load profile:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>Mean</th>
+<th>Error</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Blind (Tier 0, normalized cubic)</td>
+<td>7.38</td>
+<td>[6.54, 8.25]</td>
+</tr>
+<tr class="even">
+<td>Averaged mfr curve (LOO, no HH)</td>
+<td>2.61</td>
+<td>[2.00, 3.25]</td>
+</tr>
+<tr class="odd">
+<td>Averaged mfr curve + HH</td>
+<td>2.29</td>
+<td>[1.77, 2.87]</td>
+</tr>
+<tr class="even">
+<td>Manufacturer curve (Tier 3)</td>
+<td>2.40</td>
+<td>[1.76, 3.07]</td>
+</tr>
+<tr class="odd">
+<td>Avg + concurrent + monthly</td>
+<td>1.91</td>
+<td>[1.44, 2.44]</td>
+</tr>
+</tbody>
+</table>
+<p>The CIs confirm that the averaged manufacturer curve (2.61 [2.00–3.25]) and the specific manufacturer curve (2.40 [1.76–3.07]) have <em>overlapping</em> confidence intervals. The difference between them is not statistically significant at the 95% level—consistent with the curve count sensitivity finding that the exact composition of the average barely matters.</p>
+<p><em>(Figure 21: Decision guide — what information do you have? → expected accuracy with 95% CIs)</em></p>
+<h3 id="us-great-plains-fully-blind-validation">3.11 US Great Plains: Fully Blind Validation</h3>
+<p>To test the methodology in a genuinely blind scenario—where the turbine model is unknown—we validate against an anonymized ~95 MW onshore wind farm in the US Great Plains (South Dakota, 44.3°N, 96.5°W) using 2024 hourly production data. This represents the practical use case the paper targets: a certificate issuer who knows only the farm location, rated capacity, and annual production total.</p>
+<p>Because the turbine model is unknown, Tier 3 (manufacturer curve) is not available. We test Tiers 0–2 alongside the averaged offshore manufacturer curve from Section 3.8 and a calibrated power curve (optimized against metered data as an upper bound on achievable accuracy).</p>
+<table>
+<thead>
+<tr class="header">
+<th>Configuration</th>
+<th>Curve</th>
+<th>Wind Input</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Tier 0</td>
+<td>Generic SP=350</td>
+<td>ERA5 100m raw</td>
+<td>17.6</td>
+</tr>
+<tr class="even">
+<td>Tier 1 (80m)</td>
+<td>Generic SP=350</td>
+<td>Extrapolated to 80m</td>
+<td>18.6</td>
+</tr>
+<tr class="odd">
+<td>Tier 2 (SP=300)</td>
+<td>Generic SP=300</td>
+<td>Extrapolated to 80m</td>
+<td>17.3</td>
+</tr>
+<tr class="even">
+<td>Avg curve (no HH)</td>
+<td>Averaged offshore mfr</td>
+<td>ERA5 100m raw</td>
+<td><strong>5.8</strong></td>
+</tr>
+<tr class="odd">
+<td>Avg curve + HH 80m</td>
+<td>Averaged offshore mfr</td>
+<td>Extrapolated to 80m</td>
+<td>6.7</td>
+</tr>
+<tr class="even">
+<td>Calibrated</td>
+<td>Custom optimized</td>
+<td>ERA5 100m raw</td>
+<td><strong>0.1</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Several patterns emerge. First, the generic power curves (Tiers 0–2) perform substantially worse here (~17 pp) than on UK offshore farms (~7 pp). The Great Plains site has a higher capacity factor (46.5%) and a wind regime that the default cubic curve represents poorly—the normalized cubic overcompresses the upper generation distribution, producing shaped profiles that systematically undercount high-generation hours.</p>
+<p>Second, the averaged offshore manufacturer curve cuts the error to 5.8 pp—a 67% reduction from Tier 0, consistent with the offshore fleet result where the averaged curve closes ~96% of the Tier 0–to–Tier 3 gap. The larger residual here (5.8 pp vs. 2.6 pp offshore) reflects the greater mismatch between an offshore turbine library and an onshore wind regime: the Great Plains site likely uses turbines with different specific power and cut-in characteristics than the North Sea fleet.</p>
+<p>Third, hub height extrapolation consistently worsens results (by ~1 pp), consistent with the offshore and Hill of Towie findings. Without knowing the actual hub height, the 100m ERA5 wind speed is the best available input.</p>
+<p>Fourth, the calibrated curve (0.1 pp) confirms that with the right power curve shape, ERA5 at this location is excellent—the residual error is dominated by curve mismatch, not wind data quality.</p>
+<p><em>(Figure 26: US Great Plains validation — (a) error by configuration, (b) cross-geography comparison)</em></p>
+<hr />
+<h2 id="discussion">4. Discussion</h2>
+<h3 id="what-matters-for-hourly-matching">4.1 What Matters for Hourly Matching</h3>
+<p>Our results reveal a striking hierarchy of importance for matching score accuracy:</p>
+<ol type="1">
+<li><p><strong>Power curve shape</strong> (most important): The difference between generic and manufacturer curves (4.5 pp) dominates all other factors. However, an averaged manufacturer curve for the offshore sector closes ~96% of this gap without any turbine-specific knowledge (Section 3.8), reducing the effective penalty for unknown turbines from 5.0 pp to 0.2 pp. More surprisingly, a two-parameter generic curve with optimized parameters (<span class="math inline">V_r</span> = 13.5 m/s, <span class="math inline">n</span> = 1.75) achieves 1.9 pp across 28 farms—outperforming the averaged manufacturer curve—because the sub-cubic exponent better approximates the hourly generation <em>distribution</em> produced by real turbines (Section 3.8.1). This is because matching scores are determined by the <em>distribution</em> of hourly generation values—how many hours are at high vs. low capacity factor—which is directly controlled by the power curve’s shape. The conventional cubic exponent overestimates the steepness of the power ramp, concentrating generation too narrowly around rated output.</p></li>
+<li><p><strong>Averaging method</strong> (critical if using multi-year data): Naive hour-by-hour averaging destroys natural variability and inflates matching scores by ~10 pp—worsening to 16 pp with 20 years of input data. Distribution-preserving methods completely eliminate this penalty and improve with more data. Weibull parameter averaging reaches 1.7 pp with 10+ years, surpassing concurrent-year accuracy (2.3 pp). The method matters far more than the amount of history: 3 years with Weibull averaging (1.9 pp) beats 20 years of naive averaging (16.1 pp) by a factor of 8.</p></li>
+<li><p><strong>Scaling period</strong> (moderately important): Monthly vs. annual scaling adds ~0.4 pp improvement in mean error and +8 pp in ±3 pp compliance rate.</p></li>
+<li><p><strong>Spatial precision</strong> (least important): Matching scores are robust to 100 km spatial displacement (&lt;0.5 pp additional error).</p></li>
+</ol>
+<p>These improvements compound: the stacking configuration (averaged curve + monthly scaling) achieves 1.9 [1.4–2.4] pp across 24 farms with concurrent wind data, surpassing even the manufacturer curve with annual scaling (2.4 pp). An exploratory full blind pipeline (adding Weibull 10yr averaging) achieves 1.3 pp on a 4-farm subset, though this small N warrants caution. Out-of-sample validation against 2021 (3.3 pp) provides a more conservative prospective estimate but confirms the methodology remains within the ±5 pp threshold. The US Great Plains fully blind validation (Section 3.11) reinforces the dominance of power curve shape: the averaged offshore curve reduces error from 17.6 pp to 5.8 pp even when applied to an unknown onshore turbine in a different continent, while the calibrated curve (0.1 pp) confirms that the ERA5 wind data itself is not the bottleneck.</p>
+<p>This hierarchy is fundamentally different from what matters for <em>energy yield estimation</em>, where spatial and temporal precision are paramount and power curve shape is secondary.</p>
+<h3 id="correlation-vs.-matching-score">4.2 Correlation vs. Matching Score</h3>
+<p>Our most robust cross-cutting finding is that <strong>hourly correlation does not predict matching score accuracy</strong>. This is demonstrated across three independent tests:</p>
+<ul>
+<li><strong>Spatial</strong>: Correlation drops sharply with distance (r drops 0.325 at 200–500 km) while matching error barely changes (+0.9 pp)</li>
+<li><strong>Temporal</strong>: Prior year data has near-zero correlation (r ≈ 0.08) but low matching error (1–4 pp)</li>
+<li><strong>Cross-geography</strong>: SDWPF has lower correlation (0.76) than UK offshore (0.90) but comparable Tier 3 matching error</li>
+</ul>
+<p>This decoupling occurs because matching score is a min-sum operator that depends on the <em>fraction of time</em> generation exceeds load, not on <em>which specific hours</em> this occurs. Two profiles with identical CDFs but completely different timing will produce identical matching scores.</p>
+<p><strong>How far does this go? A shuffle test (Figure 22a).</strong> To quantify precisely how much timing matters, we randomly shuffle a farm’s hourly generation 1,000 times — preserving the CDF exactly but destroying all temporal structure — and recompute matching scores against each load profile. For Hornsea One: the flat matching score has <em>exactly zero</em> variance across shuffles (mathematically, it is a pure CDF statistic). The commercial profile shows the largest spread (std = 0.29 pp, range ~2 pp), followed by residential (0.20 pp) and industrial (0.11 pp). Even for the most structured load profile, timing affects a single farm’s matching score by less than 0.3 pp — an order of magnitude smaller than the 2.8 pp allocation error from power curve uncertainty. The CDF dominates overwhelmingly for single-farm evaluation.</p>
+<p><strong>Where correlation does matter: choosing between farms and portfolio construction.</strong> The irrelevance of correlation applies to <em>validating a single farm’s shaped allocation</em> — the question “is this profile accurate enough?” But for <em>procurement decisions</em> — “which farm should I buy from?” — different farms have different matching score <em>levels</em> against the same load (Table 1b shows 5–15 pp differences across load profiles), and these level differences are driven by each farm’s generation-load temporal alignment. Correlation also matters for portfolio diversification: nearby offshore farms are highly correlated (r = 0.89 within 30 km; Figure 22b), limiting diversification within a region. Farms 300+ km apart (r ≈ 0.54) offer meaningful diversification, producing smoother combined output and higher portfolio-level matching scores — a property that CDF agreement alone cannot capture.</p>
+<p><strong>Implication for standard-setting</strong>: Validation frameworks for shaped allocation should evaluate CDF agreement and matching score accuracy directly, rather than relying on correlation metrics. However, frameworks for <em>comparing</em> or <em>ranking</em> generation assets — and for assessing portfolio-level matching — should retain temporal correlation as a criterion.</p>
+<h3 id="practical-recommendations">4.3 Practical Recommendations</h3>
+<p>Based on our findings, we propose a tiered recommendation for practitioners:</p>
+<table>
+<colgroup>
+<col style="width: 21%" />
+<col style="width: 44%" />
+<col style="width: 34%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Scenario</th>
+<th>Recommended Approach</th>
+<th>Expected Error</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Full information (turbine model + concurrent year + exact location)</td>
+<td>Tier 3, annual scaling</td>
+<td>±3 pp (70% of farms)</td>
+</tr>
+<tr class="even">
+<td>Known turbine + recent year + approximate location</td>
+<td>Tier 3, any individual year within 5 years</td>
+<td>±4 pp</td>
+</tr>
+<tr class="odd">
+<td>Known turbine + 3 years historical data</td>
+<td>Tier 3, Weibull parameter averaging</td>
+<td>±1.9 pp</td>
+</tr>
+<tr class="even">
+<td>Known turbine + 10+ years historical data</td>
+<td>Tier 3, Weibull parameter averaging</td>
+<td>±1.7 pp</td>
+</tr>
+<tr class="odd">
+<td>Known turbine + only monthly totals</td>
+<td>Tier 3, monthly scaling</td>
+<td>±2.4 pp</td>
+</tr>
+<tr class="even">
+<td>Unknown turbine + know “offshore” + hub height</td>
+<td>Averaged mfr curve + HH extrapolation</td>
+<td>±2.3 pp</td>
+</tr>
+<tr class="odd">
+<td>Unknown turbine + know “offshore” + monthly totals</td>
+<td>Averaged mfr curve + monthly scaling</td>
+<td>±1.9 pp</td>
+</tr>
+<tr class="even">
+<td>Unknown turbine + know “offshore” + 10yr historical + monthly totals</td>
+<td>Full stack (avg curve + Weibull + monthly)</td>
+<td>±1.3 pp*</td>
+</tr>
+<tr class="odd">
+<td>Unknown turbine + know “offshore”</td>
+<td>Averaged mfr curve, no HH</td>
+<td>±2.6 pp</td>
+</tr>
+<tr class="even">
+<td>Unknown turbine + no sector info</td>
+<td>Optimized generic (<span class="math inline">V_r</span>=13.5, <span class="math inline">n</span>=1.75)</td>
+<td>±1.9 pp</td>
+</tr>
+<tr class="odd">
+<td>Unknown turbine + no info (legacy default)</td>
+<td>Normalized cubic (Tier 0)</td>
+<td>±7.6 pp</td>
+</tr>
+</tbody>
+</table>
+<p><em>*Based on 4-farm subset with extended ERA5; out-of-sample 2021 estimate is ±3.3 pp.</em></p>
+<p><strong>Key recommendation</strong>: If the turbine model is unknown and no sector information is available, replace the conventional normalized cubic (SP=350, exponent=3) with an optimized generic curve (<span class="math inline">V_r</span> = 13.5 m/s, <span class="math inline">n</span> = 1.75, cut-in = 3.0 m/s). This simple change—requiring no manufacturer data, no hub height, and no turbine class knowledge—reduces mean error from 7.6 to 1.9 pp across a diverse 28-farm fleet. If sector information is available, the averaged manufacturer curve (2.6 pp) or full stacking pipeline (1.3–1.9 pp) can be used instead, though the optimized generic already surpasses both on fleet-wide metrics. The <em>shape</em> of the power curve matters far more than any other parameter.</p>
+<h3 id="relationship-to-existing-wind-modeling-tools">4.4 Relationship to Existing Wind Modeling Tools</h3>
+<p>Several platforms already provide ERA5-based hourly wind generation profiles, notably Renewables.ninja (Staffell &amp; Pfenninger 2016), which offers bias-corrected simulations with a library of 10,000+ turbine models, and the windatlas.xyz platform (Hayes et al. 2021) for offshore wind. Commercial tools (DNV Windographer, Vortex, EMD WindPRO) provide similar capabilities with proprietary bias correction and wake modeling.</p>
+<p>This paper’s contribution is not the GEE-based simulation pipeline per se, but rather the <em>validation framework</em> and the <em>insight about what determines matching score accuracy</em>. Specifically: (a) we demonstrate that matching score accuracy depends on the generation CDF rather than temporal correlation—a finding that applies regardless of which weather platform is used; (b) we show that distribution-preserving averaging methods are essential when combining multi-year data, and that naive averaging produces 10+ pp errors—a methodological finding relevant to any tool that constructs long-term average profiles; and (c) we establish that an averaged sector-specific power curve achieves accuracy within 0.2 pp of the specific curve, reducing the need for the detailed turbine libraries that differentiate commercial platforms. These insights are platform-agnostic and would apply equally to profiles generated by Renewables.ninja, ERA5 downloads from the Climate Data Store, or any other reanalysis-based approach.</p>
+<h3 id="deployment-considerations">4.5 Deployment Considerations</h3>
+<p><strong>Gaming risk</strong>: Shaped allocation requires a power curve and a production total. A generator could strategically select a power curve (or averaging period) that maximizes their matching score. Mitigations include: requiring turbine model disclosure at registration, cross-referencing against public manufacturer curve libraries (e.g., IEC 61400-12-1 certified curves; IEC 2022), and verifying claimed totals against registry or settlement data. The ERA5 + GEE pipeline itself is fully reproducible—anyone can independently verify the weather data and shaped profile. The power curve is the weak link in auditability.</p>
+<p><strong>What this paper does not claim</strong>: We do not validate ERA5 for generation <em>forecasting</em> (predicting future output). We do not propose replacing metered data where it exists. We do not address curtailment, negative pricing, or balancing market effects on generation profiles. Shaped allocation is specifically for reconstructing hourly profiles when only periodic totals are available.</p>
+<h3 id="stakeholder-implications">4.6 Stakeholder Implications</h3>
+<p><strong>Certificate issuers</strong>: Tier 3 shaped allocation (2.8 [2.0–3.8] pp mean error) is sufficient for granular certificate allocation when metered hourly data is unavailable. Issuers should require turbine model disclosure and use the manufacturer power curve. Where the turbine model is unknown but the technology class is known (e.g., “offshore wind”), an averaged manufacturer curve achieves 2.6 [2.0–3.3] pp. Issuers should specify duration-curve averaging or Weibull parameter averaging if historical multi-year data is permitted. A particularly relevant use case is retroactive hourly allocation: generators with existing monthly or quarterly production filings in national GO registries who need to disaggregate to hourly granularity for EnergyTag-compliant granular certificates. These generators typically know their turbine model (Tier 3) and have monthly totals—the expected error is ~2.4 pp (Section 3.4), well within the ±3 pp benchmark.</p>
+<p><strong>RFNBO compliance</strong>: The EU Delegated Regulation 2023/1184 mandates full hourly temporal correlation for renewable hydrogen additionality claims from 2030. Generators seeking RFNBO certification for electrolysis-coupled wind farms will need hourly generation profiles for every operating hour. Shaped allocation provides a fallback where metered data has gaps or where retrospective compliance demonstration is required. The ~2.8 pp Tier 3 accuracy demonstrated here would need to be assessed against any RFNBO-specific accuracy requirements as they are defined.</p>
+<p><strong>Regulators</strong>: The ±3 pp accuracy band demonstrated here can inform tolerance thresholds for shaped allocation in hourly matching frameworks. Frameworks should explicitly specify the permitted averaging method for historical data, as naive averaging produces 10+ pp error while distribution-preserving methods achieve &lt;2 pp. Validation frameworks should evaluate CDF agreement rather than correlation.</p>
+<p><strong>Corporate buyers</strong>: For portfolio-level procurement decisions, we expect farm-level errors to partially cancel across uncorrelated sites—portfolio matching score accuracy will be better than individual-farm accuracy. For single-site decisions where precision matters (e.g., co-location with a data center), metered data should be preferred. A worked example: a 500 MW offshore farm with SWT-7.0-154 turbines and 2,800 GWh annual production could use shaped allocation achieving ±3 pp matching score accuracy, requiring only the turbine model and annual total.</p>
+<h3 id="limitations">4.7 Limitations</h3>
+<ol type="1">
+<li><p><strong>Geographic scope</strong>: Our offshore results are concentrated in the UK North Sea. Different wind regimes (tropical, monsoon-driven) may behave differently.</p></li>
+<li><p><strong>Wind-only analysis</strong>: We validate only wind power. Solar power shaped allocation may have different sensitivities, particularly for spatial and temporal resolution.</p></li>
+<li><p><strong>ERA5 resolution</strong>: The 27 km grid (effective resolution ~60–80 km) cannot resolve terrain effects below this scale. Penmanshiel shows +10.8 pp error at Tier 3, though Hill of Towie—also complex Scottish onshore terrain—achieves 0.09 pp at Tier 3, suggesting the limitation is site-specific rather than terrain-class-wide.</p></li>
+<li><p><strong>Single scaling factor</strong>: Our monthly/quarterly scaling uses a single multiplicative factor per period. More sophisticated methods (e.g., pattern scaling, quantile mapping) might improve results but add complexity.</p></li>
+<li><p><strong>Year 2020 primary</strong>: The baseline validation uses 2020 as the primary target year. Out-of-sample validation against 2021 (Section 3.10.2) shows higher errors (3.3 pp vs. 1.3 pp for the full stack), suggesting that the 2020 results benefit from partial in-sample fitting. The 2021 result is a more conservative estimate of prospective accuracy, but is based on only 5 farms.</p></li>
+<li><p><strong>Unmodeled operational effects</strong>: The ERA5-based model does not capture curtailment, wake losses (direction-dependent, stability-dependent, and highly variable across large farms), or forced outages. Shaped allocation’s multiplicative scaling absorbs symmetric capacity losses but not their temporal pattern. If curtailment is concentrated in high-wind hours, the metered duration curve is compressed relative to the modeled one, with ambiguous effects on matching score accuracy.</p></li>
+<li><p><strong>COVID-era curtailment as confound</strong>: UK wind curtailment in Q2 2020 was approximately 5–8% of potential generation, driven by COVID-era demand drops and resulting negative pricing events. This affects the metered duration curve—compressing its upper tail relative to the uncurtailed model profile—and is a potential confound for the entire 2020 baseline validation. The higher 2021 out-of-sample errors (Section 3.10.2) may partly reflect reduced curtailment returning to normal patterns in 2021, not just year-to-year wind variability. Disentangling curtailment effects from ERA5 modeling error would require curtailment dispatch records, which are not publicly available at the farm level.</p></li>
+<li><p><strong>ERA5 systematic wind speed bias</strong>: ERA5 systematically underestimates strong offshore winds (Gandoin &amp; Garza 2024), compressing the upper tail of the wind speed distribution. This is the same mechanism that makes naive multi-year averaging fail (Section 3.3)—and it operates even with concurrent-year ERA5 data. Part of the 2.8 pp Tier 3 residual error may be attributable to this ERA5 bias rather than power curve uncertainty alone. The shaped allocation’s scaling step corrects the <em>total</em> energy but not the <em>distributional shape</em> of this bias, which affects the generation CDF and hence the matching score.</p></li>
+<li><p><strong>Density correction not applied in primary results</strong>: The IEC 61400-12-1 density correction is implemented but not applied in the primary offshore validation (Section 2.1), where the correction magnitude is ~±1% of wind speed. For sites at significant elevation (e.g., SDWPF at 1,400 m), the correction is ~5% and is applied. The primary offshore results are therefore slightly conservative in that they omit a small, beneficial correction.</p></li>
+</ol>
+<hr />
+<h2 id="conclusions">5. Conclusions</h2>
+<p>For flat (baseload) consumption profiles, hourly matching scores depend primarily on the cumulative distribution of generation values rather than on which specific hours are windy. This relationship holds approximately for time-varying load profiles (commercial, residential, industrial) tested in this study. This insight explains the otherwise counterintuitive results throughout this study: why a wrong year’s wind data works nearly as well as the concurrent year (1–4 pp vs. 2.3 pp), why 100 km of spatial displacement barely matters (&lt;0.5 pp), why naive averaging destroys accuracy (10 [8.7–11.0] pp) while distribution-preserving methods improve it (1.7 [1.2–2.2] pp at 10 years)—and why the power curve shape dominates all other factors.</p>
+<p>With manufacturer power curves (Tier 3), ERA5 shaped allocation achieves 2.8 [2.0–3.8] pp mean error (70% [48–87%] of farms within ±3 pp, 87% [74–100%] within ±5 pp; 95% bootstrap CIs). An averaged manufacturer curve for the offshore sector achieves 2.6 [2.0–3.3] pp without any turbine-specific knowledge. Combining all improvements—averaged curve, Weibull wind synthesis, monthly scaling—produces 1.9 [1.4–2.4] pp on 24 farms with concurrent wind data. An exploratory full blind pipeline (10-year historical ERA5, no concurrent weather) achieves 1.3 pp on a 4-farm subset, though this small-sample result should be interpreted cautiously. Out-of-sample validation against 2021 metered data (no 2021 ERA5 used) yields 3.3 pp—a more conservative and arguably more representative estimate of prospective accuracy, still within the ±5 pp threshold for 4 of 5 farms. The averaged curve is robust to its composition: even 3 of 8 available curves produce 2.3 pp accuracy. A preliminary test on a Chinese continental site (SDWPF) confirms Tier 3 accuracy transfers cross-geography (±4.5 pp), though broader validation across wind regimes is needed. The averaged curve also generalizes to Hill of Towie—a Scottish onshore farm using Siemens SWT-2.3-82 turbines absent from the curve set—achieving 1.8 pp (0.2 pp with hub height correction), confirming cross-turbine transferability. A fully blind validation on an anonymized US Great Plains farm (turbine model unknown) achieves 5.8 pp with the averaged offshore curve—higher than the offshore fleet but a 67% reduction from Tier 0, confirming that the methodology provides substantial value even with maximum information asymmetry. Solar power shaped allocation is out of scope but the distribution-not-timing insight may transfer, as solar matching scores similarly depend on the generation CDF.</p>
+<p>When combining multi-year historical wind data, the averaging method matters far more than the amount of data. Weibull parameter averaging achieves 1.9 [1.1–2.8] pp with 3 years and 1.7 [1.2–2.2] pp with 10+ years—surpassing the concurrent year (2.3 [1.3–3.1] pp). Naive hour-by-hour averaging worsens from 10 pp to 16 pp over the same range. A 10-year historical window is the practical sweet spot. The recommendation is: average the distribution parameters, not the time series.</p>
+<p>For hourly energy matching, the shape of the power curve is the dominant factor: the conventional generic cubic produces 7.6 pp error, while an optimized two-parameter generic curve (<span class="math inline">V_r</span> = 13.5 m/s, <span class="math inline">n</span> = 1.75) achieves 1.9 pp across 28 farms—outperforming even the averaged manufacturer curve (2.6 pp) and approaching manufacturer-specific accuracy (2.8 pp), with no turbine information required. Knowing the exact location or year barely matters—because, at least for baseload and near-baseload consumption profiles, matching scores depend primarily on the shape of the generation distribution rather than on which hours are windy.</p>
+<hr />
+<h2 id="figures">Figures</h2>
+<ol type="1">
+<li>Matching score error by farm (Tier 0)</li>
+<li>Tier progression comparison (onshore farms)</li>
+<li>Pearson correlation by farm</li>
+<li>Error and correlation by terrain type</li>
+<li>Load profile sensitivity</li>
+<li>Error vs. correlation scatter</li>
+<li>Summary results table (color-coded)</li>
+<li><strong>Tier 0 vs. Tier 3 comparison (headline figure)</strong></li>
+<li>Duration curves: shaped vs. metered (4 representative farms)</li>
+<li>Weekly time series snapshots</li>
+<li>Hourly scatter plots (4 farms)</li>
+<li>Diurnal and seasonal patterns</li>
+<li>Spatial sensitivity (3-panel: error, correlation, degradation vs. distance)</li>
+<li>Scaling period sensitivity (annual, quarterly, monthly)</li>
+<li>Temporal sensitivity (concurrent vs. prior years vs. multi-year average)</li>
+<li>SDWPF Chinese continental validation</li>
+<li><strong>Synthesis figure (6-panel summary of all findings)</strong></li>
+<li><strong>Alternative averaging methods comparison (method errors + duration curve CDF)</strong></li>
+<li><strong>Historical window length sensitivity (all methods vs. years, zoomed distribution-preserving)</strong></li>
+<li><strong>Power curve default sensitivity (tier gradation, SP sweep, curve overlay)</strong></li>
+<li><strong>Decision guide: What information do you have? → Expected accuracy (with 95% CIs)</strong></li>
+<li><strong>Shuffle test: Correlation irrelevant for allocation, essential for procurement (shuffle distributions + inter-farm correlation vs. distance)</strong></li>
+<li><strong>Curve count sensitivity (mean error vs. number of curves in average)</strong></li>
+<li><strong>2020 vs. 2021 out-of-sample comparison (per-farm error, full stack)</strong></li>
+<li><strong>Hill of Towie onshore validation (tier progression + cross-turbine generalization)</strong></li>
+<li><strong>US Great Plains fully blind validation (error by configuration + cross-geography comparison)</strong></li>
+<li><strong>Generic curve parameter sweep (rated_ws × exponent heatmap + comparison bar chart)</strong></li>
+</ol>
+<hr />
+<h2 id="references">References</h2>
+<p>Davidson, M. R., &amp; Millstein, D. (2022). Limitations of reanalysis data for wind power applications. <em>Applied Energy</em>, 126, 118905.</p>
+<p>EnergyTag. (2022). <em>Granular Certificate Scheme Standard v1.0</em>.</p>
+<p>EnergyTag. (2024). <em>GC Scheme Standard V2</em>.</p>
+<p>European Commission. (2023). Commission Delegated Regulation (EU) 2023/1184 supplementing Directive (EU) 2018/2001. <em>Official Journal of the European Union</em>, L 157/11.</p>
+<p>European Parliament. (2023). Directive (EU) 2023/2413 amending Directive (EU) 2018/2001 (RED III). <em>Official Journal of the European Union</em>, L 2023/2413.</p>
+<p>Gandoin, R., &amp; Garza, D. (2024). Underestimation of strong winds offshore in ERA5: Evidence from long-term tall mast observations. <em>Wind Energy Science</em>, 9, 1727–1745.</p>
+<p>Google. (2021). <em>24/7 Carbon-Free Energy: Methodologies and Metrics</em>.</p>
+<p>Gruber, K., et al. (2022). Towards global validation of wind power simulations: A multi-country assessment of wind power simulation from MERRA-2 and ERA5. <em>Environmental Research Letters</em>, 17(11), 114004.</p>
+<p>Gualtieri, G. (2022). Reliability of ERA5 reanalysis data for wind resource assessment: A comparison against tall towers. <em>Energies</em>, 14(14), 4169.</p>
+<p>Hayes, L., Stocks, M., &amp; Blakers, A. (2021). Accurate long-term power generation model for offshore wind farms. <em>Renewable Energy</em>, 177, 1190–1205.</p>
+<p>Hersbach, H., et al. (2020). The ERA5 global reanalysis. <em>Quarterly Journal of the Royal Meteorological Society</em>, 146(730), 1999–2049.</p>
+<p>IEC. (2022). IEC 61400-12-1:2022. Wind energy generation systems — Part 12-1: Power performance measurements of electricity producing wind turbines. Ed 3.0.</p>
+<p>Olauson, J. (2018). ERA5: The new champion of wind power modelling? <em>Renewable Energy</em>, 126, 322–331.</p>
+<p>Peña-Sánchez, Y., et al. (2025). A global validation of ERA5 reanalysis wind speed data. <em>Energy</em>, 315, 134289.</p>
+<p>Ramon, J., Lledó, L., Torralba, V., Soret, A., &amp; Doblas-Reyes, F. J. (2019). What global reanalysis best represents near-surface winds? <em>Quarterly Journal of the Royal Meteorological Society</em>, 145(724), 3236–3251.</p>
+<p>Riepin, I., et al. (2025). 24/7 carbon-free electricity procurement accelerates clean technology adoption. <em>Joule</em>, 9(2), 101808.</p>
+<p>Staffell, I., &amp; Pfenninger, S. (2016). Using bias-corrected reanalysis to simulate current and future wind power output. <em>Energy</em>, 114, 1224–1239.</p>
+<p>Xu, Q., et al. (2024). System-level impacts of voluntary 24/7 carbon-free electricity procurement. <em>Joule</em>, 8(2), 374–400.</p>
+</div>
+</body>
+</html>
