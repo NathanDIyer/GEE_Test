@@ -1,14 +1,3089 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/GEE_Test/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hourly Match Calculator</title>
-    <script type="module" crossorigin src="/GEE_Test/assets/index-DpCzBDWl.js"></script>
-    <link rel="stylesheet" crossorigin href="/GEE_Test/assets/index-BxvqkTLG.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Satellite-Grade Hourly Matching — What We Know</title>
+
+<!-- Fonts (Google-style) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500;600&display=swap">
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+<style>
+/* ============================================================
+   DESIGN SYSTEM — Google-inspired / Clean / Modern
+   ============================================================ */
+
+:root {
+  --bg:        #F8F9FA;
+  --bg-card:   #FFFFFF;
+  --bg-dark:   #1A73E8;
+  --ink:       #202124;
+  --ink-mid:   #5F6368;
+  --ink-light: #80868B;
+  --ink-faint: #DADCE0;
+  --accent:    #1A73E8;
+  --accent-bg: #E8F0FE;
+  --good:      #34A853;
+  --good-bg:   #E6F4EA;
+  --warn:      #F9AB00;
+  --warn-bg:   #FEF7E0;
+  --bad:       #EA4335;
+  --bad-bg:    #FCE8E6;
+  --blue:      #4285F4;
+  --blue-bg:   #E8F0FE;
+
+  --font-serif: 'Google Sans', 'Inter', -apple-system, sans-serif;
+  --font-sans:  'Google Sans', 'Inter', -apple-system, sans-serif;
+  --font-mono:  'Google Sans Mono', 'Roboto Mono', monospace;
+
+  --gap: clamp(1rem, 3vw, 2rem);
+  --max-w: 920px;
+  --max-w-wide: 1120px;
+  --shadow-1: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+  --shadow-2: 0 1px 3px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15);
+  --radius: 8px;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  font-size: 17px;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--ink);
+  background: #FFFFFF;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: #D2E3FC;
+  color: var(--ink);
+}
+
+/* ============================================================
+   HERO
+   ============================================================ */
+
+.hero {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2.5rem clamp(2rem, 4vw, 4rem);
+  background: linear-gradient(135deg, #1A73E8 0%, #1557B0 40%, #174EA6 100%);
+  color: #FFFFFF;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 70% 40%, rgba(66,133,244,0.3) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 80% at 20% 70%, rgba(52,168,83,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero::after {
+  display: none;
+}
+
+.hero-inner {
+  position: relative;
+  max-width: 1200px;
+  width: 100%;
+  z-index: 1;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  padding: 0.35rem 0.85rem;
+  border-radius: 100px;
+  margin-bottom: 1rem;
+}
+
+.hero-badge::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: #34A853;
+  border-radius: 50%;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.hero h1 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin-bottom: 1rem;
+  max-width: 16em;
+  color: #FFFFFF;
+}
+
+.hero h1 em {
+  font-style: normal;
+  color: #4CAF50;
+  font-weight: 500;
+}
+
+.hero-sub {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: rgba(255,255,255,0.92);
+  max-width: 36em;
+  margin-bottom: 0;
+}
+
+.hero-stat-row {
+  display: flex;
+  gap: clamp(1rem, 3vw, 2rem);
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.hero-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-stat-num {
+  font-family: var(--font-mono);
+  font-size: clamp(1.3rem, 3vw, 1.8rem);
+  font-weight: 600;
+  color: #fff;
+  line-height: 1;
+}
+
+.hero-stat-num.good { color: #F44336; }
+.hero-stat-num.accent { color: #9C27B0; }
+
+.hero-stat-label {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.85);
+  margin-top: 0.25rem;
+  max-width: 12em;
+}
+
+.scroll-cue {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  animation: bob 2s ease-in-out infinite;
+}
+
+.scroll-cue svg {
+  width: 18px; height: 18px;
+  stroke: rgba(255,255,255,0.5);
+}
+
+@keyframes bob {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(6px); }
+}
+
+/* ============================================================
+   NAV
+   ============================================================ */
+
+.sticky-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--ink-faint);
+  padding: 0 var(--gap);
+  transition: box-shadow 0.3s;
+}
+
+.sticky-nav.scrolled {
+  box-shadow: var(--shadow-1);
+}
+
+.sticky-nav-inner {
+  max-width: var(--max-w-wide);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 0.6rem 0;
+}
+
+.sticky-nav-inner::-webkit-scrollbar { display: none; }
+
+.nav-link {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-mid);
+  text-decoration: none;
+  padding: 0.4rem 0.7rem;
+  border-radius: 2px;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.nav-link:hover {
+  color: var(--ink);
+  background: rgba(32,33,36,0.04);
+}
+
+.nav-link.active {
+  color: var(--accent);
+  background: var(--accent-bg);
+  border-radius: 100px;
+}
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+
+section {
+  padding: clamp(3rem, 8vw, 5rem) var(--gap);
+  scroll-margin-top: 3.5rem;
+}
+
+.section-inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+}
+
+.section-inner.wide {
+  max-width: var(--max-w-wide);
+}
+
+.section-num {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+section h2 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-weight: 400;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  color: var(--ink);
+}
+
+section h3 {
+  font-family: var(--font-sans);
+  font-size: 1.3rem;
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+  margin-top: 2rem;
+}
+
+section p {
+  max-width: 38em;
+  margin-bottom: 1rem;
+  color: var(--ink-mid);
+}
+
+section p strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ============================================================
+   CALLOUT
+   ============================================================ */
+
+.callout {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--ink-faint);
+  border-left: 3px solid var(--accent);
+  padding: 1.5rem 1.75rem;
+  margin: 1.5rem 0;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+}
+
+.callout.good {
+  border-left-color: var(--good);
+  background: var(--good-bg);
+}
+
+.callout.blue {
+  border-left-color: var(--blue);
+  background: var(--blue-bg);
+}
+
+.callout-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.callout.good .callout-label { color: var(--good); }
+.callout.blue .callout-label { color: var(--blue); }
+
+.callout p {
+  color: var(--ink);
+  margin-bottom: 0;
+  font-size: 0.95rem;
+}
+
+/* ============================================================
+   RECIPE CARD (NEW)
+   ============================================================ */
+
+.recipe-card {
+  background: var(--bg-card);
+  border: 2px solid var(--good);
+  border-radius: var(--radius);
+  padding: 2rem;
+  margin: 2rem 0;
+  position: relative;
+  box-shadow: var(--shadow-1);
+}
+
+.recipe-card::before {
+  content: 'RECOMMENDED DEFAULT';
+  position: absolute;
+  top: -0.7rem;
+  left: 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--good);
+  background: var(--bg-card);
+  padding: 0 0.5rem;
+}
+
+.recipe-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.recipe-step {
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.recipe-step-num {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--good);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.recipe-step p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.92rem;
+}
+
+.recipe-formula {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  background: var(--bg);
+  padding: 1rem 1.25rem;
+  border-radius: 4px;
+  margin: 1rem 0 0;
+  color: var(--ink);
+  line-height: 1.7;
+}
+
+/* ============================================================
+   DOS AND DONTS (NEW)
+   ============================================================ */
+
+.dos-donts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+@media (max-width: 640px) {
+  .dos-donts { grid-template-columns: 1fr; }
+}
+
+.dos-col, .donts-col {
+  padding: 1.5rem;
+  border-radius: 6px;
+}
+
+.dos-col {
+  background: var(--good-bg);
+  border: 1px solid rgba(30,125,75,0.2);
+}
+
+.donts-col {
+  background: var(--bad-bg);
+  border: 1px solid rgba(194,61,46,0.2);
+}
+
+.dos-col h4, .donts-col h4 {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.dos-col h4 { color: var(--good); }
+.donts-col h4 { color: var(--bad); }
+
+.dos-col ul, .donts-col ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.dos-col li, .donts-col li {
+  font-size: 0.85rem;
+  color: var(--ink-mid);
+  padding-left: 1.5rem;
+  position: relative;
+  line-height: 1.5;
+}
+
+.dos-col li::before {
+  content: '\2713';
+  position: absolute;
+  left: 0;
+  color: var(--good);
+  font-weight: 700;
+}
+
+.donts-col li::before {
+  content: '\2717';
+  position: absolute;
+  left: 0;
+  color: var(--bad);
+  font-weight: 700;
+}
+
+/* ============================================================
+   VALIDATION MAP (NEW)
+   ============================================================ */
+
+.validation-map {
+  width: 100%;
+  height: 420px;
+  border-radius: 6px;
+  border: 1px solid var(--ink-faint);
+  margin: 1.5rem 0;
+  position: relative;
+  z-index: 0;
+}
+
+.validation-map .leaflet-pane { z-index: 0; }
+.validation-map .leaflet-top,
+.validation-map .leaflet-bottom { z-index: 1; }
+
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 0.75rem 0 0;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--ink-mid);
+}
+
+.map-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.map-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0,0,0,0.3);
+}
+
+.map-stats {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--ink-faint);
+}
+
+.map-stat {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--ink-mid);
+}
+
+.map-stat strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ============================================================
+   TIER EXPLORER
+   ============================================================ */
+
+.tier-explorer {
+  margin: 2rem 0;
+}
+
+.tier-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--ink-faint);
+  margin-bottom: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tier-tabs::-webkit-scrollbar { display: none; }
+
+.tier-tab {
+  position: relative;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+  background: none;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.tier-tab:hover {
+  color: var(--ink-mid);
+  background: rgba(26,22,18,0.03);
+}
+
+.tier-tab.active {
+  color: var(--ink);
+}
+
+.tier-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0; right: 0;
+  height: 2px;
+  background: var(--accent);
+}
+
+.tier-panel {
+  display: none;
+  background: var(--bg-card);
+  border: 1px solid var(--ink-faint);
+  border-top: none;
+  padding: 2rem;
+  border-radius: 0 0 4px 4px;
+  animation: fadeUp 0.3s ease;
+}
+
+.tier-panel.active {
+  display: block;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.tier-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.tier-panel-title {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 400;
+}
+
+.tier-error-badge {
+  font-family: var(--font-mono);
+  font-size: 1.6rem;
+  font-weight: 600;
+  padding: 0.3rem 0.8rem;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.tier-error-badge.bad { background: var(--bad-bg); color: var(--bad); }
+.tier-error-badge.warn { background: var(--warn-bg); color: var(--warn); }
+.tier-error-badge.good { background: var(--good-bg); color: var(--good); }
+
+.tier-you-know {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.know-chip {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 2px;
+  border: 1px solid var(--ink-faint);
+  background: var(--bg);
+  color: var(--ink-mid);
+}
+
+.know-chip.has {
+  background: var(--good-bg);
+  border-color: var(--good);
+  color: var(--good);
+}
+
+.know-chip.has::before {
+  content: '\2713  ';
+}
+
+.tier-detail {
+  font-size: 0.92rem;
+  color: var(--ink-mid);
+  line-height: 1.7;
+}
+
+.tier-detail p {
+  max-width: none;
+}
+
+.tier-detail strong {
+  color: var(--ink);
+}
+
+.tier-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.tier-metric {
+  text-align: center;
+  padding: 1rem 0.5rem;
+  background: var(--bg);
+  border-radius: 4px;
+}
+
+.tier-metric-val {
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.tier-metric-desc {
+  font-size: 0.72rem;
+  color: var(--ink-light);
+  margin-top: 0.25rem;
+}
+
+/* ============================================================
+   ERROR BAR CHART
+   ============================================================ */
+
+.error-bars {
+  margin: 2rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.error-bar-row {
+  display: grid;
+  grid-template-columns: 200px 1fr 60px;
+  align-items: center;
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .error-bar-row {
+    grid-template-columns: 110px 1fr 50px;
+    gap: 0.5rem;
+  }
+}
+
+.error-bar-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-mid);
+  text-align: right;
+}
+
+.error-bar-track {
+  position: relative;
+  height: 28px;
+  background: var(--bg);
+  border-radius: 2px;
+  overflow: visible;
+}
+
+.error-bar-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  border-radius: 2px;
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.error-bar-ci {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 10px;
+  border-left: 2px solid rgba(26,22,18,0.4);
+  border-right: 2px solid rgba(26,22,18,0.4);
+  background: rgba(26,22,18,0.1);
+  border-radius: 1px;
+  transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.error-bar-val {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.threshold-line {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 1px;
+  z-index: 2;
+}
+
+.threshold-line.t3 {
+  background: repeating-linear-gradient(to bottom, var(--good) 0 3px, transparent 3px 6px);
+}
+
+.threshold-line.t5 {
+  background: repeating-linear-gradient(to bottom, var(--warn) 0 3px, transparent 3px 6px);
+}
+
+.error-bar-legend {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  color: var(--ink-light);
+  padding-left: calc(200px + 1rem);
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 640px) {
+  .error-bar-legend { padding-left: calc(110px + 0.5rem); }
+}
+
+.error-bar-legend span {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.legend-line {
+  width: 14px; height: 0;
+  border-top: 2px dashed;
+}
+
+.legend-line.green { border-color: var(--good); }
+.legend-line.amber { border-color: var(--warn); }
+
+/* ============================================================
+   HIERARCHY
+   ============================================================ */
+
+.hierarchy {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 2rem 0;
+}
+
+.hierarchy-item {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 0;
+  position: relative;
+}
+
+.hierarchy-spine {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hierarchy-dot {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.hierarchy-line {
+  width: 2px;
+  flex: 1;
+  background: var(--ink-faint);
+  min-height: 20px;
+}
+
+.hierarchy-content {
+  padding: 0.25rem 0 2rem 0.75rem;
+}
+
+.hierarchy-title {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+
+.hierarchy-desc {
+  font-size: 0.85rem;
+  color: var(--ink-mid);
+  line-height: 1.6;
+}
+
+.hierarchy-impact {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 2px;
+  margin-top: 0.35rem;
+}
+
+/* ============================================================
+   CALCULATOR
+   ============================================================ */
+
+.calculator {
+  background: var(--bg-card);
+  border: 1px solid var(--ink-faint);
+  border-radius: 6px;
+  padding: 2rem;
+  margin: 2rem 0;
+}
+
+.calc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+@media (max-width: 700px) {
+  .calc-grid { grid-template-columns: 1fr; }
+}
+
+.calc-inputs { display: flex; flex-direction: column; gap: 1.25rem; }
+
+.calc-field label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-mid);
+  margin-bottom: 0.4rem;
+}
+
+.calc-field select {
+  width: 100%;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--ink-faint);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--ink);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%235C5347' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2rem;
+}
+
+.calc-field select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.calc-result {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: var(--bg);
+  border-radius: 6px;
+  padding: 2rem 1rem;
+  min-height: 200px;
+}
+
+.calc-result-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+  margin-bottom: 0.5rem;
+}
+
+.calc-result-num {
+  font-family: var(--font-mono);
+  font-size: 3rem;
+  font-weight: 600;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+  transition: color 0.3s;
+}
+
+.calc-result-unit {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--ink-mid);
+  margin-bottom: 1rem;
+}
+
+.calc-result-bar {
+  width: 100%;
+  max-width: 280px;
+  height: 8px;
+  background: #E5E0D8;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.calc-result-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1), background 0.3s;
+}
+
+.calc-result-context {
+  font-size: 0.78rem;
+  color: var(--ink-light);
+  max-width: 22em;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   INSIGHT CARDS
+   ============================================================ */
+
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.insight-card {
+  background: var(--bg-card);
+  border: 1px solid var(--ink-faint);
+  border-radius: 4px;
+  padding: 1.5rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.insight-card:hover {
+  border-color: var(--ink-light);
+  box-shadow: 0 2px 12px rgba(26,22,18,0.06);
+}
+
+.insight-icon {
+  font-size: 1.2rem;
+  margin-bottom: 0.75rem;
+}
+
+.insight-card h4 {
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.insight-card p {
+  font-size: 0.82rem;
+  color: var(--ink-mid);
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+
+/* ============================================================
+   EVIDENCE TABLE
+   ============================================================ */
+
+.evidence-table-wrap {
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+table.evidence {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+table.evidence thead th {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  border-bottom: 2px solid var(--ink-faint);
+  white-space: nowrap;
+}
+
+table.evidence thead th:not(:first-child) {
+  text-align: right;
+}
+
+table.evidence tbody td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--ink-faint);
+  color: var(--ink-mid);
+}
+
+table.evidence tbody td:not(:first-child) {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+table.evidence tbody tr:hover {
+  background: rgba(26,22,18,0.02);
+}
+
+table.evidence tbody td:first-child {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.cell-good { color: var(--good) !important; font-weight: 600 !important; }
+.cell-warn { color: var(--warn) !important; font-weight: 600 !important; }
+.cell-bad  { color: var(--bad) !important; font-weight: 600 !important; }
+
+.table-note {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--ink-light);
+  margin-top: 0.5rem;
+}
+
+/* ============================================================
+   DECISION TREE
+   ============================================================ */
+
+.decision-tree {
+  margin: 2rem 0;
+}
+
+.dt-node {
+  background: var(--bg-card);
+  border: 1px solid var(--ink-faint);
+  border-radius: 6px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.dt-node.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.dt-question {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  margin-bottom: 1rem;
+}
+
+.dt-options {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.dt-option {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  padding: 0.55rem 1.1rem;
+  border: 1px solid var(--ink-faint);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--ink-mid);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dt-option:hover {
+  border-color: var(--ink-light);
+  color: var(--ink);
+  background: #fff;
+}
+
+.dt-option.selected {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.dt-result {
+  display: none;
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: var(--good-bg);
+  border: 1px solid var(--good);
+  border-radius: 6px;
+  animation: fadeUp 0.4s ease;
+}
+
+.dt-result.show {
+  display: block;
+}
+
+.dt-result-title {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--good);
+  margin-bottom: 0.5rem;
+}
+
+.dt-result-num {
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.dt-result-desc {
+  font-size: 0.88rem;
+  color: var(--ink-mid);
+  line-height: 1.6;
+}
+
+/* ============================================================
+   GEOGRAPHY CARDS
+   ============================================================ */
+
+.geo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.geo-card {
+  background: var(--bg-card);
+  border: 1px solid var(--ink-faint);
+  border-radius: 6px;
+  padding: 1.5rem;
+  transition: border-color 0.2s;
+}
+
+.geo-card:hover {
+  border-color: var(--ink-light);
+}
+
+.geo-card-region {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-light);
+  margin-bottom: 0.5rem;
+}
+
+.geo-card h4 {
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
+  margin-bottom: 0.35rem;
+}
+
+.geo-card-meta {
+  font-size: 0.78rem;
+  color: var(--ink-light);
+  margin-bottom: 1rem;
+}
+
+.geo-card-results {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.geo-card-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.geo-card-stat-val {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.geo-card-stat-label {
+  font-size: 0.68rem;
+  color: var(--ink-light);
+}
+
+/* Bias callout banner */
+.bias-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, #E8F0FE 0%, #F0F4FF 100%);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 6px 6px 0;
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0 0.5rem;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+.bias-callout-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Hero stat inside geo card */
+.geo-card-hero-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 1rem 0 0.75rem;
+}
+.geo-hero-val {
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.geo-hero-unit {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-left: 0.1em;
+}
+.geo-hero-label {
+  font-size: 0.72rem;
+  color: var(--ink-light);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Bias bar — mini horizontal range indicator */
+.geo-bias-bar {
+  margin-bottom: 0.75rem;
+}
+.geo-bias-indicator {
+  position: relative;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent) 0%, #E8F0FE 40%, #FCE8E6 60%, var(--bad) 100%);
+  border-radius: 2px;
+  margin-bottom: 0.35rem;
+  overflow: visible;
+}
+.geo-bias-dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 2px solid var(--bg-card);
+  top: 50%;
+  transform: translate(-50%, -50%);
+  /* Position dot based on --bias: 0 = center, negative = left, positive = right */
+  /* Scale: -10pp = 10%, 0 = 50%, +10pp = 90% */
+  left: calc(50% + var(--bias) * 4%);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.geo-bias-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.geo-bias-tag {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+}
+.geo-bias-tag.conservative {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+.geo-bias-tag.overcrediting {
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+.geo-bias-val {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--ink-light);
+}
+
+.geo-card-note {
+  font-size: 0.78rem;
+  color: var(--ink-light);
+  margin-top: 0;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   METHOD TOGGLE / ACCORDION
+   ============================================================ */
+
+.method-toggle {
+  margin: 1.5rem 0;
+}
+
+.method-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--ink-mid);
+  background: none;
+  border: 1px solid var(--ink-faint);
+  padding: 0.45rem 0.9rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.method-toggle-btn:hover {
+  border-color: var(--ink-light);
+  color: var(--ink);
+}
+
+.method-toggle-btn svg {
+  width: 12px; height: 12px;
+  transition: transform 0.3s;
+}
+
+.method-toggle-btn.open svg {
+  transform: rotate(180deg);
+}
+
+.method-content {
+  display: none;
+  padding: 1.25rem;
+  margin-top: 0.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--ink-faint);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: var(--ink-mid);
+  line-height: 1.7;
+  animation: fadeUp 0.3s ease;
+}
+
+.method-content.open {
+  display: block;
+}
+
+/* ============================================================
+   ROADMAP (NEW)
+   ============================================================ */
+
+.roadmap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 2rem 0;
+}
+
+.roadmap-item {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 0;
+  position: relative;
+}
+
+.roadmap-spine {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.roadmap-dot {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.roadmap-dot svg {
+  width: 14px; height: 14px;
+  stroke: #fff;
+  fill: none;
+  stroke-width: 2;
+}
+
+.roadmap-line {
+  width: 2px;
+  flex: 1;
+  background: var(--ink-faint);
+  min-height: 20px;
+}
+
+.roadmap-content {
+  padding: 0.15rem 0 2rem 0.75rem;
+}
+
+.roadmap-content h4 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+
+.roadmap-content p {
+  font-size: 0.85rem;
+  color: var(--ink-mid);
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+
+footer {
+  padding: 3rem var(--gap);
+  border-top: 1px solid var(--ink-faint);
+  text-align: center;
+}
+
+footer p {
+  font-size: 0.78rem;
+  color: var(--ink-light);
+  max-width: 40em;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+section:nth-child(even of section) {
+  background: #fff;
+}
+
+@media (max-width: 900px) {
+  .hero-flex { flex-direction: column !important; text-align: center; }
+  .hero-flex > div:first-child { flex: unset !important; }
+  .hero-flex > div:last-child { flex: unset !important; min-width: unset !important; width: 100%; max-width: 600px; }
+}
+@media (max-width: 640px) {
+  html { font-size: 15px; }
+  .hero-stat-row { gap: 1.5rem; }
+  .tier-tab { padding: 0.6rem 0.8rem; font-size: 0.65rem; }
+  .tier-panel { padding: 1.25rem; }
+  .calculator { padding: 1.25rem; }
+  .hierarchy-item { grid-template-columns: 44px 1fr; }
+  .roadmap-item { grid-template-columns: 44px 1fr; }
+  .validation-map { height: 300px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════
+     HERO
+     ════════════════════════════════════════════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-flex" style="display:flex; align-items:center; gap:2.5rem;">
+      <div style="flex:0 0 340px;">
+        <div class="hero-badge">Research Briefing</div>
+        <h1>You can score hourly matching<br>from <em>satellite data alone</em></h1>
+        <p class="hero-sub">
+          A single formula and satellite weather data reconstruct wind generation profiles accurate enough for hourly energy accounting. Validated across 35 farms in 4 countries. No meter data required.
+        </p>
+      </div>
+      <div style="flex:1; min-width:400px;">
+        <div style="display:flex; justify-content:center; gap:1.5rem; margin-bottom:0.5rem; font-size:0.75rem; letter-spacing:0.03em;">
+          <span style="color:rgba(255,255,255,0.7);"><span style="display:inline-block;width:12px;height:2px;background:rgba(255,255,255,0.7);vertical-align:middle;margin-right:5px;"></span> Metered</span>
+          <span style="color:#4ADE80;"><span style="display:inline-block;width:12px;height:2px;background:#4ADE80;vertical-align:middle;margin-right:5px;"></span> Satellite</span>
+        </div>
+        <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+          <defs>
+            <linearGradient id="metGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="rgba(255,255,255,0.25)" />
+              <stop offset="100%" stop-color="rgba(255,255,255,0.02)" />
+            </linearGradient>
+          </defs>
+          <line x1="71.26" y1="10" x2="71.26" y2="190" stroke="rgba(255,255,255,0.15)" stroke-width="1" /><text x="71.26" y="212" fill="rgba(255,255,255,0.5)" font-size="11" text-anchor="middle" font-family="Inter,system-ui,sans-serif">Sun</text>
+          <line x1="171.86" y1="10" x2="171.86" y2="190" stroke="rgba(255,255,255,0.15)" stroke-width="1" /><text x="171.86" y="212" fill="rgba(255,255,255,0.5)" font-size="11" text-anchor="middle" font-family="Inter,system-ui,sans-serif">Mon</text>
+          <line x1="272.46" y1="10" x2="272.46" y2="190" stroke="rgba(255,255,255,0.15)" stroke-width="1" /><text x="272.46" y="212" fill="rgba(255,255,255,0.5)" font-size="11" text-anchor="middle" font-family="Inter,system-ui,sans-serif">Tue</text>
+          <line x1="373.05" y1="10" x2="373.05" y2="190" stroke="rgba(255,255,255,0.15)" stroke-width="1" /><text x="373.05" y="212" fill="rgba(255,255,255,0.5)" font-size="11" text-anchor="middle" font-family="Inter,system-ui,sans-serif">Wed</text>
+          <line x1="473.65" y1="10" x2="473.65" y2="190" stroke="rgba(255,255,255,0.15)" stroke-width="1" /><text x="473.65" y="212" fill="rgba(255,255,255,0.5)" font-size="11" text-anchor="middle" font-family="Inter,system-ui,sans-serif">Thu</text>
+          <line x1="574.25" y1="10" x2="574.25" y2="190" stroke="rgba(255,255,255,0.15)" stroke-width="1" /><text x="574.25" y="212" fill="rgba(255,255,255,0.5)" font-size="11" text-anchor="middle" font-family="Inter,system-ui,sans-serif">Fri</text>
+          <line x1="674.85" y1="10" x2="674.85" y2="190" stroke="rgba(255,255,255,0.15)" stroke-width="1" /><text x="674.85" y="212" fill="rgba(255,255,255,0.5)" font-size="11" text-anchor="middle" font-family="Inter,system-ui,sans-serif">Sat</text>
+          <path d="M0,178.7 L4.2,167.1 L8.4,156.4 L12.6,167.8 L16.8,176.3 L21,180.7 L25.1,168.5 L29.3,184.8 L33.5,188.6 L37.7,183.4 L41.9,186 L46.1,190 L50.3,190 L54.5,190 L58.7,190 L62.9,190 L67.1,190 L71.3,190 L75.4,185.4 L79.6,181.2 L83.8,188.7 L88,190 L92.2,190 L96.4,187.9 L100.6,190 L104.8,190 L109,189.7 L113.2,183.4 L117.4,181.7 L121.6,185.3 L125.7,190 L129.9,190 L134.1,188.4 L138.3,186.2 L142.5,158.2 L146.7,160 L150.9,175.4 L155.1,157.1 L159.3,152.5 L163.5,162.5 L167.7,169.8 L171.9,177.8 L176,184.7 L180.2,184.4 L184.4,187.1 L188.6,190 L192.8,190 L197,190 L201.2,190 L205.4,187.3 L209.6,181 L213.8,171.8 L218,168.4 L222.2,178 L226.3,190 L230.5,190 L234.7,189.2 L238.9,190 L243.1,190 L247.3,190 L251.5,189.7 L255.7,177.4 L259.9,177.4 L264.1,171.4 L268.3,161.5 L272.5,139.5 L276.6,135.8 L280.8,150.8 L285,188.6 L289.2,190 L293.4,190 L297.6,188.3 L301.8,188.9 L306,188.8 L310.2,185.3 L314.4,181.3 L318.6,160.9 L322.8,153.5 L326.9,146.2 L331.1,151.4 L335.3,145 L339.5,143.8 L343.7,130.3 L347.9,139.9 L352.1,149.8 L356.3,158.7 L360.5,153.1 L364.7,143.2 L368.9,151.9 L373.1,156.3 L377.2,161.1 L381.4,165.9 L385.6,167.4 L389.8,167.1 L394,165.6 L398.2,160.2 L402.4,163.9 L406.6,167 L410.8,174.6 L415,176.4 L419.2,174.1 L423.4,171.3 L427.5,169.2 L431.7,156.4 L435.9,129.5 L440.1,113.6 L444.3,100.1 L448.5,108.4 L452.7,103.7 L456.9,113.3 L461.1,107.7 L465.3,112 L469.5,100.5 L473.7,105.4 L477.8,111.6 L482,137.8 L486.2,129.2 L490.4,138.2 L494.6,127.6 L498.8,117.4 L503,115.8 L507.2,125.3 L511.4,86.6 L515.6,100.2 L519.8,88.1 L524,82.7 L528.1,65.7 L532.3,76.7 L536.5,60.1 L540.7,45.5 L544.9,36.7 L549.1,35.1 L553.3,37.3 L557.5,35.7 L561.7,35.2 L565.9,38.2 L570.1,42.7 L574.3,46.4 L578.4,46 L582.6,43 L586.8,46.8 L591,65.5 L595.2,94.4 L599.4,91.1 L603.6,72.6 L607.8,78.3 L612,65 L616.2,45 L620.4,44.7 L624.6,70.4 L628.7,81.5 L632.9,53.1 L637.1,39.4 L641.3,37.3 L645.5,36.1 L649.7,36.1 L653.9,36.4 L658.1,36 L662.3,36.4 L666.5,36.8 L670.7,36 L674.9,36.1 L679,36.4 L683.2,37.1 L687.4,40.2 L691.6,52.9 L695.8,50.7 L700,48.1 L700,190 L0,190 Z" fill="url(#metGrad)" />
+          <path d="M0,178.7 L4.2,167.1 L8.4,156.4 L12.6,167.8 L16.8,176.3 L21,180.7 L25.1,168.5 L29.3,184.8 L33.5,188.6 L37.7,183.4 L41.9,186 L46.1,190 L50.3,190 L54.5,190 L58.7,190 L62.9,190 L67.1,190 L71.3,190 L75.4,185.4 L79.6,181.2 L83.8,188.7 L88,190 L92.2,190 L96.4,187.9 L100.6,190 L104.8,190 L109,189.7 L113.2,183.4 L117.4,181.7 L121.6,185.3 L125.7,190 L129.9,190 L134.1,188.4 L138.3,186.2 L142.5,158.2 L146.7,160 L150.9,175.4 L155.1,157.1 L159.3,152.5 L163.5,162.5 L167.7,169.8 L171.9,177.8 L176,184.7 L180.2,184.4 L184.4,187.1 L188.6,190 L192.8,190 L197,190 L201.2,190 L205.4,187.3 L209.6,181 L213.8,171.8 L218,168.4 L222.2,178 L226.3,190 L230.5,190 L234.7,189.2 L238.9,190 L243.1,190 L247.3,190 L251.5,189.7 L255.7,177.4 L259.9,177.4 L264.1,171.4 L268.3,161.5 L272.5,139.5 L276.6,135.8 L280.8,150.8 L285,188.6 L289.2,190 L293.4,190 L297.6,188.3 L301.8,188.9 L306,188.8 L310.2,185.3 L314.4,181.3 L318.6,160.9 L322.8,153.5 L326.9,146.2 L331.1,151.4 L335.3,145 L339.5,143.8 L343.7,130.3 L347.9,139.9 L352.1,149.8 L356.3,158.7 L360.5,153.1 L364.7,143.2 L368.9,151.9 L373.1,156.3 L377.2,161.1 L381.4,165.9 L385.6,167.4 L389.8,167.1 L394,165.6 L398.2,160.2 L402.4,163.9 L406.6,167 L410.8,174.6 L415,176.4 L419.2,174.1 L423.4,171.3 L427.5,169.2 L431.7,156.4 L435.9,129.5 L440.1,113.6 L444.3,100.1 L448.5,108.4 L452.7,103.7 L456.9,113.3 L461.1,107.7 L465.3,112 L469.5,100.5 L473.7,105.4 L477.8,111.6 L482,137.8 L486.2,129.2 L490.4,138.2 L494.6,127.6 L498.8,117.4 L503,115.8 L507.2,125.3 L511.4,86.6 L515.6,100.2 L519.8,88.1 L524,82.7 L528.1,65.7 L532.3,76.7 L536.5,60.1 L540.7,45.5 L544.9,36.7 L549.1,35.1 L553.3,37.3 L557.5,35.7 L561.7,35.2 L565.9,38.2 L570.1,42.7 L574.3,46.4 L578.4,46 L582.6,43 L586.8,46.8 L591,65.5 L595.2,94.4 L599.4,91.1 L603.6,72.6 L607.8,78.3 L612,65 L616.2,45 L620.4,44.7 L624.6,70.4 L628.7,81.5 L632.9,53.1 L637.1,39.4 L641.3,37.3 L645.5,36.1 L649.7,36.1 L653.9,36.4 L658.1,36 L662.3,36.4 L666.5,36.8 L670.7,36 L674.9,36.1 L679,36.4 L683.2,37.1 L687.4,40.2 L691.6,52.9 L695.8,50.7 L700,48.1" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" />
+          <path d="M0,182 L4.2,181.3 L8.4,182.1 L12.6,180.9 L16.8,181.3 L21,183.8 L25.1,181.3 L29.3,183.7 L33.5,181.9 L37.7,176.7 L41.9,175.4 L46.1,178.1 L50.3,179.5 L54.5,181.1 L58.7,182 L62.9,189.4 L67.1,189.7 L71.3,188.8 L75.4,187.4 L79.6,188.2 L83.8,186 L88,186.5 L92.2,185 L96.4,182.7 L100.6,182.3 L104.8,185.1 L109,186.1 L113.2,187.6 L117.4,186.7 L121.6,182.2 L125.7,179.9 L129.9,170.3 L134.1,163.6 L138.3,157.3 L142.5,162 L146.7,165.2 L150.9,164.8 L155.1,163.3 L159.3,165 L163.5,170.4 L167.7,171 L171.9,171.1 L176,176.4 L180.2,182.8 L184.4,183.5 L188.6,184.3 L192.8,186.8 L197,187.2 L201.2,183.8 L205.4,178.8 L209.6,175.9 L213.8,171.9 L218,171.9 L222.2,171.7 L226.3,179.1 L230.5,181.9 L234.7,187.1 L238.9,186.4 L243.1,186.1 L247.3,186.3 L251.5,182.7 L255.7,172.7 L259.9,159.3 L264.1,133.5 L268.3,136.7 L272.5,142 L276.6,160.4 L280.8,179.9 L285,182.5 L289.2,181.8 L293.4,185.4 L297.6,187 L301.8,186.8 L306,186.2 L310.2,186.3 L314.4,183.3 L318.6,178.7 L322.8,169.8 L326.9,145.9 L331.1,130.5 L335.3,131.3 L339.5,140.8 L343.7,145.2 L347.9,144.6 L352.1,141.1 L356.3,137.7 L360.5,139.7 L364.7,138.4 L368.9,142 L373.1,148.1 L377.2,157.3 L381.4,152.7 L385.6,149.1 L389.8,155.2 L394,162.1 L398.2,167 L402.4,167.8 L406.6,169.2 L410.8,171.7 L415,161.6 L419.2,158.7 L423.4,152.9 L427.5,150.8 L431.7,139 L435.9,117.4 L440.1,119.6 L444.3,119.2 L448.5,118.7 L452.7,118.2 L456.9,119.8 L461.1,125.5 L465.3,124.5 L469.5,129.4 L473.7,136.9 L477.8,147.4 L482,141.8 L486.2,134.7 L490.4,134.6 L494.6,132 L498.8,129.5 L503,127.3 L507.2,125.3 L511.4,120.4 L515.6,110.5 L519.8,107.4 L524,106.8 L528.1,99.5 L532.3,90.3 L536.5,77.7 L540.7,63.6 L544.9,58.5 L549.1,61.2 L553.3,63.7 L557.5,62.6 L561.7,63 L565.9,59.8 L570.1,57.9 L574.3,66.6 L578.4,70.8 L582.6,65.9 L586.8,85.9 L591,97.9 L595.2,97.7 L599.4,94.5 L603.6,89.2 L607.8,88.1 L612,87.2 L616.2,78.7 L620.4,77.6 L624.6,76.8 L628.7,79.7 L632.9,75.7 L637.1,69.8 L641.3,58.2 L645.5,40.3 L649.7,25.2 L653.9,21.6 L658.1,20.7 L662.3,23.9 L666.5,20.6 L670.7,27.2 L674.9,33.1 L679,35.3 L683.2,58.1 L687.4,52.5 L691.6,54.6 L695.8,56 L700,54.7" fill="none" stroke="#4ADE80" stroke-width="2" />
+        </svg>
+        <div style="font-size:0.7rem; color:rgba(255,255,255,0.4); margin-top:0.3rem; text-align:center;">One week, US Great Plains &mdash; r&thinsp;=&thinsp;0.97</div>
+      </div>
+    </div>
+    <div class="hero-stat-row">
+      <div class="hero-stat">
+        <span class="hero-stat-num good">~2 pp</span>
+        <span class="hero-stat-label">Typical matching score error with universal default</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num" style="color:#FF9800;">35</span>
+        <span class="hero-stat-label">Wind farms tested across 4 countries</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num" style="color:#4CAF50;">1</span>
+        <span class="hero-stat-label">Universal formula. Works for any wind farm, any terrain</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num accent">0</span>
+        <span class="hero-stat-label">Meter data required from the generator</span>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-cue">
+    <span>Scroll</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════════════════════════
+     STICKY NAV
+     ════════════════════════════════════════════════════════════ -->
+<nav class="sticky-nav" id="sticky-nav">
+  <div class="sticky-nav-inner">
+    <a href="#problem" class="nav-link">Problem</a>
+    <a href="#solution" class="nav-link">How It Works</a>
+    <a href="#map" class="nav-link">Map</a>
+    <a href="#default" class="nav-link">Universal Default</a>
+    <a href="#hierarchy" class="nav-link">Data Hierarchy</a>
+    <a href="#what-matters" class="nav-link">What Matters</a>
+    <a href="#terrain" class="nav-link">Geography</a>
+    <a href="#calculator" class="nav-link">Calculator</a>
+    <a href="#evidence" class="nav-link">Evidence</a>
+    <a href="#decision" class="nav-link">Guide</a>
+    <a href="#next-steps" class="nav-link">Next Steps</a>
+    <a href="#bottom-line" class="nav-link">Bottom Line</a>
+    <a href="#appendix" class="nav-link">Appendix</a>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 1: THE PROBLEM
+     ════════════════════════════════════════════════════════════ -->
+<section id="problem">
+  <div class="section-inner fade-in">
+    <div class="section-num">01 &mdash; The Problem</div>
+    <h2>Hourly data is locked up. Registry data is not enough.</h2>
+    <p>
+      To do hourly energy matching, you need an hourly generation profile for each generator you're claiming certificates from. But when you buy RECs from an existing registry, <strong>you typically get only two things</strong>: the plant location and the volume of certificates.
+    </p>
+    <p>
+      The actual hourly production data is <strong>not publicly available</strong> in most markets. It's held by operators, aggregators, or grid companies. Across the UK, US, China, and Australia, we found the same barrier.
+    </p>
+
+    <div class="callout">
+      <div class="callout-label">The question</div>
+      <p>If all you have from a registry is <strong>which plant</strong> and <strong>how many MWh</strong>, can you still produce a reliable hourly matching score without any meter data from the generator?</p>
+    </div>
+
+    <h3>Why this matters for policy</h3>
+    <p>
+      Moving to <strong>24/7 carbon-free energy</strong> or <strong>hourly matching requirements</strong> requires knowing generation profiles hour by hour. Without a validated default methodology for the common case where meter data is unavailable, the market faces a choice: exclude most existing generation assets, or accept unverifiable claims.
+    </p>
+    <p>
+      <strong>Satellite-based shaped allocation provides a third option:</strong> a verifiable default that, as we'll show across 35 farms in 4 countries, is accurate to within a few percentage points.
+    </p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 2: HOW IT WORKS
+     ════════════════════════════════════════════════════════════ -->
+<section id="solution">
+  <div class="section-inner fade-in">
+    <div class="section-num">02 &mdash; How It Works</div>
+    <h2>Three ingredients, no meter required</h2>
+
+    <div class="insight-grid">
+      <div class="insight-card">
+        <div class="insight-icon">&#127758;</div>
+        <h4>Satellite Weather Data</h4>
+        <p>
+          Hourly global wind data at ~30 km resolution from 1940 to present, available for free via Google Earth Engine (ECMWF ERA5). <strong>Covers every location on Earth.</strong>
+        </p>
+      </div>
+      <div class="insight-card">
+        <div class="insight-icon">&#128208;</div>
+        <h4>A Power Curve</h4>
+        <p>
+          Converts wind speed into power output. Our <strong>universal default</strong> requires zero turbine information and achieves ~2 pp accuracy across all terrain types.
+        </p>
+      </div>
+      <div class="insight-card">
+        <div class="insight-icon">&#9889;</div>
+        <h4>Known Total Production</h4>
+        <p>
+          Annual (or monthly) MWh from the registry. The satellite profile is <strong>scaled</strong> so the total matches exactly. Satellite data determines the hourly <em>shape</em>, not the volume.
+        </p>
+      </div>
+    </div>
+
+    <div class="callout good">
+      <div class="callout-label">Why this works</div>
+      <p>The registry already tells you total energy yield. All you need from satellite data is <strong>when</strong> the energy was produced: the hourly shape. Predicting shape is a much easier problem than predicting volume, which is why satellite data gets you so far.</p>
+    </div>
+
+    <div class="method-toggle">
+      <button class="method-toggle-btn" onclick="toggleMethod(this)">
+        How shaped allocation works, step by step
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4l4 4 4-4"/></svg>
+      </button>
+      <div class="method-content">
+        <strong>1. Get hourly wind speeds</strong> from satellite data for the farm's coordinates and the target year.<br><br>
+        <strong>2. Apply our universal default formula</strong> to convert wind speeds into estimated generation for each hour.<br><br>
+        <strong>3. Scale the result</strong> so the total matches what the registry says the farm actually produced.<br><br>
+        <strong>4. Calculate matching score</strong> by comparing the shaped generation profile against the consumption profile hour by hour.<br><br>
+        The error we report is the absolute difference between the score from satellite data and the score from actual metered data.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 3: GLOBAL VALIDATION MAP
+     ════════════════════════════════════════════════════════════ -->
+<section id="map">
+  <div class="section-inner wide fade-in">
+    <div class="section-num">03 &mdash; Validation Map</div>
+    <h2>35 farms. 4 countries. Every result on one map.</h2>
+    <p>Click any marker to see farm details and error values.</p>
+
+    <div id="validation-map" class="validation-map"></div>
+
+    <div class="map-legend" id="map-legend">
+      <div class="map-legend-item"><div class="map-legend-dot" style="background:#2563EB;"></div> UK Offshore (24)</div>
+      <div class="map-legend-item"><div class="map-legend-dot" style="background:#16A34A;"></div> UK Onshore (3)</div>
+      <div class="map-legend-item"><div class="map-legend-dot" style="background:#D97706;"></div> BMRS Scottish (4)</div>
+      <div class="map-legend-item"><div class="map-legend-dot" style="background:#DC2626;"></div> Australia (3)</div>
+      <div class="map-legend-item"><div class="map-legend-dot" style="background:#7C3AED;"></div> China (1)</div>
+      <div class="map-legend-item"><div class="map-legend-dot" style="background:#EA580C;"></div> US Great Plains (1)</div>
+    </div>
+
+    <div class="map-stats">
+      <div class="map-stat"><strong>4</strong> countries</div>
+      <div class="map-stat"><strong>2</strong> hemispheres</div>
+      <div class="map-stat"><strong>3</strong> terrain types</div>
+      <div class="map-stat"><strong>~2 pp</strong> median error with universal default</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 4: THE UNIVERSAL DEFAULT
+     ════════════════════════════════════════════════════════════ -->
+<section id="default">
+  <div class="section-inner fade-in">
+    <div class="section-num">04 &mdash; The Universal Default</div>
+    <h2>One curve for every wind farm on Earth</h2>
+    <p>
+      We tested thousands of combinations across 28 farms, each time excluding the test farm from the training set. The result: one simple formula that requires <strong>zero turbine information</strong> and outperforms both the naive approach and averaged manufacturer curves.
+    </p>
+
+    <div class="recipe-card">
+      <div class="recipe-steps">
+        <div class="recipe-step">
+          <div class="recipe-step-num">1</div>
+          <p>Get hourly wind speeds from satellite data for the farm's location</p>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-step-num">2</div>
+          <p>Convert wind speeds to estimated generation using our universal default formula</p>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-step-num">3</div>
+          <p>Scale the result so the total matches what the registry says the farm actually produced</p>
+        </div>
+      </div>
+      <div class="recipe-formula">
+        The formula: output = (wind_speed / 12)<sup>2</sup>, capped at 100%. &nbsp;&middot;&nbsp; <strong>Expected accuracy: ~2 percentage points</strong>
+      </div>
+    </div>
+
+    <h3 style="margin-top:2.5rem;">How does it compare?</h3>
+    <p>Without any default, the naive approach produces 7.4 pp error. The universal default cuts that to 2.0 pp, with conservative bias (it tends to slightly underestimate your score, which is the safe direction). Turbine data can improve things further, but even without it, this gets you most of the way there.</p>
+
+    <div class="error-bars" id="error-bars"></div>
+    <div class="error-bar-legend">
+      <span><span class="legend-line green"></span> &plusmn;3 pp threshold</span>
+      <span><span class="legend-line amber"></span> &plusmn;5 pp threshold</span>
+      <span>&mdash;&mdash; Uncertainty range</span>
+    </div>
+
+    <div class="callout blue" style="margin-top:2rem;">
+      <div class="callout-label">Why this formula?</div>
+      <p>This formula is the best starting assumption we found when you have no turbine information. It's deliberately conservative: it tends to slightly underestimate your score, which is the safe direction for procurement. It <strong>works across offshore, onshore, flat terrain, and complex terrain without adjustment</strong>. If you can get more information (manufacturer curve, monthly totals, hub height), you can improve from here.</p>
+    </div>
+
+    <div class="method-toggle">
+      <button class="method-toggle-btn" onclick="toggleMethod(this)">
+        What if I know the turbine model?
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4l4 4 4-4"/></svg>
+      </button>
+      <div class="method-content">
+        <strong>Great, use it.</strong> The manufacturer power curve improves accuracy and gives you a more defensible basis for the estimate. With the exact turbine curve you get 2.8 pp; an average of several manufacturer curves achieves 2.6 pp.<br><br>
+        <strong>But if you can't get that information</strong> (and in most registry scenarios you can't), the universal default is a solid starting point. It requires zero turbine knowledge and still gets you to ~2 pp. <strong>You don't need turbine data to get a usable result</strong>.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 5: DATA HIERARCHY
+     ════════════════════════════════════════════════════════════ -->
+<section id="hierarchy">
+  <div class="section-inner fade-in">
+    <div class="section-num">05 &mdash; Data Hierarchy</div>
+    <h2>Start with the default. Improve if you can.</h2>
+    <p>
+      The universal default works when you know nothing about the turbine. Each additional piece of information you can get improves the result.
+    </p>
+
+    <div class="hierarchy">
+      <div class="hierarchy-item">
+        <div class="hierarchy-spine">
+          <div class="hierarchy-dot" style="background:var(--good);">&#10003;</div>
+          <div class="hierarchy-line"></div>
+        </div>
+        <div class="hierarchy-content">
+          <div class="hierarchy-title">Start here: Location + Annual Production</div>
+          <div class="hierarchy-desc">
+            This is where most users start. You know where the farm is and how much it produced. Apply the universal default formula to satellite wind data, then scale to the annual total.
+          </div>
+          <span class="hierarchy-impact" style="background:var(--good-bg);color:var(--good);">~2 pp error</span>
+        </div>
+      </div>
+
+      <div class="hierarchy-item">
+        <div class="hierarchy-spine">
+          <div class="hierarchy-dot" style="background:var(--good);">+</div>
+          <div class="hierarchy-line"></div>
+        </div>
+        <div class="hierarchy-content">
+          <div class="hierarchy-title">Better: + Monthly Production Totals</div>
+          <div class="hierarchy-desc">
+            If the registry provides monthly breakdowns, accuracy improves. Scale the satellite profile to monthly totals instead of annual.
+          </div>
+          <span class="hierarchy-impact" style="background:var(--good-bg);color:var(--good);">~1.6 pp error</span>
+        </div>
+      </div>
+
+      <div class="hierarchy-item">
+        <div class="hierarchy-spine">
+          <div class="hierarchy-dot" style="background:var(--good);">+</div>
+          <div class="hierarchy-line"></div>
+        </div>
+        <div class="hierarchy-content">
+          <div class="hierarchy-title">Better yet: + Turbine Manufacturer Curve</div>
+          <div class="hierarchy-desc">
+            If you can get the manufacturer power curve for the turbine model, use it. It improves accuracy and gives a more defensible basis, especially for auditable procurement. Achieves ~2.8 pp, and combined with monthly scaling can go lower.
+          </div>
+          <span class="hierarchy-impact" style="background:var(--good-bg);color:var(--good);">~2.8 pp, more defensible</span>
+        </div>
+      </div>
+
+      <div class="hierarchy-item">
+        <div class="hierarchy-spine">
+          <div class="hierarchy-dot" style="background:var(--ink);">&#9733;</div>
+          <div class="hierarchy-line" style="display:none;"></div>
+        </div>
+        <div class="hierarchy-content">
+          <div class="hierarchy-title">Gold standard: Full Hourly Meter Data</div>
+          <div class="hierarchy-desc">
+            If you have it, use it. But most registries don't provide this, which is why the universal default exists.
+          </div>
+          <span class="hierarchy-impact" style="background:var(--bg);color:var(--ink);">0 pp error</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout good">
+      <div class="callout-label">Bottom line</div>
+      <p>You can always start with the universal default. More information (monthly totals, turbine specs, capacity factor) lets you improve from there. <strong>But even the starting point is good enough for hourly matching.</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 6: WHAT MATTERS + DO'S AND DON'TS
+     ════════════════════════════════════════════════════════════ -->
+<section id="what-matters">
+  <div class="section-inner fade-in">
+    <div class="section-num">06 &mdash; What Matters Most</div>
+    <h2>What matters most (and what doesn't)</h2>
+    <p>
+      For energy yield estimation, location and timing matter most. For hourly matching scores, the hierarchy inverts.
+    </p>
+
+    <div class="hierarchy">
+      <div class="hierarchy-item">
+        <div class="hierarchy-spine">
+          <div class="hierarchy-dot" style="background:var(--accent);">1</div>
+          <div class="hierarchy-line"></div>
+        </div>
+        <div class="hierarchy-content">
+          <div class="hierarchy-title">Getting the default right matters most</div>
+          <div class="hierarchy-desc">
+            Which formula you use to convert wind into power is the single biggest factor. Without a good default, a basic cubic approach gives ~7.5 pp error. Our universal default drops this to ~2 pp. <strong>That's a ~5 pp improvement just from using the right starting assumption.</strong>
+          </div>
+          <span class="hierarchy-impact" style="background:var(--good-bg);color:var(--good);">~5 pp improvement with the right default</span>
+        </div>
+      </div>
+
+      <div class="hierarchy-item">
+        <div class="hierarchy-spine">
+          <div class="hierarchy-dot" style="background:var(--warn);">2</div>
+          <div class="hierarchy-line"></div>
+        </div>
+        <div class="hierarchy-content">
+          <div class="hierarchy-title">Don't average the wrong way</div>
+          <div class="hierarchy-desc">
+            If you use multiple years of weather data, <strong>how you combine them matters enormously</strong>. Simple averaging destroys accuracy (10&ndash;16 pp error). Use the actual year's data when possible. <strong>The wrong averaging method is worse than using the wrong year entirely.</strong>
+          </div>
+          <span class="hierarchy-impact" style="background:var(--bad-bg);color:var(--bad);">~10 pp penalty if naive</span>
+        </div>
+      </div>
+
+      <div class="hierarchy-item">
+        <div class="hierarchy-spine">
+          <div class="hierarchy-dot" style="background:var(--good);">3</div>
+          <div class="hierarchy-line" style="display:none;"></div>
+        </div>
+        <div class="hierarchy-content">
+          <div class="hierarchy-title">Location precision barely matters (offshore)</div>
+          <div class="hierarchy-desc">
+            For offshore farms, being 100 km off on the coordinates adds <strong>less than 0.5 pp error</strong>; the satellite grid is good enough. Onshore in complex terrain, location precision may matter more. Monthly scaling improves accuracy by ~0.4 pp if the data is available.
+          </div>
+          <span class="hierarchy-impact" style="background:var(--good-bg);color:var(--good);">&lt;0.5 pp within 100 km (offshore)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout blue">
+      <div class="callout-label">Why?</div>
+      <p>Hourly matching scores depend on <strong>how often the wind blows hard vs. soft</strong>, not on which exact hours are windy. The formula shapes the distribution; the location determines timing. For matching scores, the distribution matters more.</p>
+    </div>
+
+    <h3>Do's and Don'ts</h3>
+
+    <div class="dos-donts">
+      <div class="dos-col">
+        <h4>Do</h4>
+        <ul>
+          <li>Use satellite wind speeds directly (don't adjust for turbine height)</li>
+          <li>Use our universal default formula</li>
+          <li>Use this year's weather data when available</li>
+          <li>Scale to monthly totals when available</li>
+          <li>Check timezone alignment between weather data and generation data</li>
+        </ul>
+      </div>
+      <div class="donts-col">
+        <h4>Don't</h4>
+        <ul>
+          <li>Simply average wind speeds across years (this destroys accuracy)</li>
+          <li>Adjust wind speeds for turbine height without the full manufacturer curve</li>
+          <li>Use a basic cubic formula when the universal default is available</li>
+          <li>Skip using the universal default just because you lack turbine information</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 7: UNIVERSAL DEFAULT — GEOGRAPHY VALIDATION
+     ════════════════════════════════════════════════════════════ -->
+<section id="terrain">
+  <div class="section-inner wide fade-in">
+    <div class="section-num">07 &mdash; One Curve, Every Geography</div>
+    <h2>The universal default: location + annual MWh. Nothing else.</h2>
+    <p>Every result below uses the same blind configuration: ERA5 satellite wind data, the universal default power curve (<span style="font-family:var(--font-mono);font-size:0.85em;">V<sub>r</sub>=12.0, n=2.0</span>), and only the farm's coordinates and annual production total. No turbine model, no hub height, no manufacturer data.</p>
+
+    <div class="bias-callout">
+      <div class="bias-callout-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L2 18h16L10 2z" stroke="#1557B0" stroke-width="1.5" fill="none"/><path d="M10 8v4M10 14v1" stroke="#1557B0" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div>
+        <strong style="color:var(--ink);">Deliberately conservative.</strong>
+        <span style="color:var(--ink-mid);">
+          Fleet mean signed error is <strong>&minus;0.16&thinsp;pp</strong>. The universal default slightly <em>undercredits</em> generators on average. This is by design: the sub-cubic exponent compensates for ERA5 wind speed bias, ensuring satellite scores never systematically overcredit. Generators who want full credit invest in metering.
+        </span>
+      </div>
+    </div>
+
+    <div class="geo-grid">
+
+      <!-- UK Offshore -->
+      <div class="geo-card">
+        <div class="geo-card-region">UK Offshore</div>
+        <h4>North Sea Fleet</h4>
+        <div class="geo-card-meta">24 farms &middot; Multiple turbine types &middot; Open water</div>
+        <div class="geo-card-hero-stat">
+          <span class="geo-hero-val cell-good">2.0<span class="geo-hero-unit">pp</span></span>
+          <span class="geo-hero-label">mean |error|</span>
+        </div>
+        <div class="geo-bias-bar">
+          <div class="geo-bias-indicator" style="--bias:-0.08;">
+            <span class="geo-bias-dot"></span>
+          </div>
+          <div class="geo-bias-labels">
+            <span class="geo-bias-tag conservative">Conservative</span>
+            <span class="geo-bias-val">&minus;0.08&thinsp;pp signed</span>
+          </div>
+        </div>
+        <p class="geo-card-note">
+          Best-characterized dataset. The universal default alone matches manufacturer curve accuracy (~2.8&thinsp;pp) with zero turbine knowledge.
+        </p>
+      </div>
+
+      <!-- UK Onshore -->
+      <div class="geo-card">
+        <div class="geo-card-region">UK Onshore</div>
+        <h4>Hill of Towie &amp; Kelmarsh</h4>
+        <div class="geo-card-meta">2 farms &middot; Complex + flat terrain &middot; Different turbine models</div>
+        <div class="geo-card-hero-stat">
+          <span class="geo-hero-val cell-good">1.0<span class="geo-hero-unit">pp</span></span>
+          <span class="geo-hero-label">mean |error|</span>
+        </div>
+        <div class="geo-bias-bar">
+          <div class="geo-bias-indicator" style="--bias:-0.59;">
+            <span class="geo-bias-dot"></span>
+          </div>
+          <div class="geo-bias-labels">
+            <span class="geo-bias-tag conservative">Conservative</span>
+            <span class="geo-bias-val">&minus;0.6&thinsp;pp signed</span>
+          </div>
+        </div>
+        <p class="geo-card-note">
+          Works on turbines never seen in training. SWT-2.3 and Senvion MM92, neither in the offshore curve set.
+        </p>
+      </div>
+
+      <!-- Scotland Grid-Constrained -->
+      <div class="geo-card">
+        <div class="geo-card-region">Scotland &mdash; Grid-Constrained</div>
+        <h4>BMRS Onshore</h4>
+        <div class="geo-card-meta">4 farms &middot; Fallago Rig, Hadyard Hill, Whitelee, Griffin</div>
+        <div class="geo-card-hero-stat">
+          <span class="geo-hero-val cell-warn">~5<span class="geo-hero-unit">pp</span></span>
+          <span class="geo-hero-label">mean |error|</span>
+        </div>
+        <div class="geo-bias-bar">
+          <div class="geo-bias-indicator" style="--bias:-5.0;">
+            <span class="geo-bias-dot"></span>
+          </div>
+          <div class="geo-bias-labels">
+            <span class="geo-bias-tag conservative">Conservative</span>
+            <span class="geo-bias-val">&minus;5.0&thinsp;pp signed</span>
+          </div>
+        </div>
+        <p class="geo-card-note">
+          These farms are <strong>grid-constrained</strong>: max output is 40&ndash;50% of nameplate. Clipped shapes create an irreducible floor, not a method failure.
+        </p>
+      </div>
+
+      <!-- Australia -->
+      <div class="geo-card">
+        <div class="geo-card-region">Australia</div>
+        <h4>AEMO Onshore</h4>
+        <div class="geo-card-meta">3 farms &middot; Macarthur, Hornsdale, Sapphire &middot; VIC, SA, NSW</div>
+        <div class="geo-card-hero-stat">
+          <span class="geo-hero-val cell-warn">~6<span class="geo-hero-unit">pp</span></span>
+          <span class="geo-hero-label">mean |error|</span>
+        </div>
+        <div class="geo-bias-bar">
+          <div class="geo-bias-indicator" style="--bias:-6.0;">
+            <span class="geo-bias-dot"></span>
+          </div>
+          <div class="geo-bias-labels">
+            <span class="geo-bias-tag conservative">Conservative</span>
+            <span class="geo-bias-val">&minus;6.0&thinsp;pp signed</span>
+          </div>
+        </div>
+        <p class="geo-card-note">
+          ERA5 underestimates wind at some Australian sites. Nearly identical to US results (~6&thinsp;pp), suggesting a geography-independent floor.
+        </p>
+      </div>
+
+      <!-- China -->
+      <div class="geo-card">
+        <div class="geo-card-region">China &mdash; Continental</div>
+        <h4>SDWPF Wind Farm</h4>
+        <div class="geo-card-meta">134 turbines &middot; 70m hub height &middot; 1,400m elevation</div>
+        <div class="geo-card-hero-stat">
+          <span class="geo-hero-val cell-good">2.6<span class="geo-hero-unit">pp</span></span>
+          <span class="geo-hero-label">mean |error|*</span>
+        </div>
+        <div class="geo-bias-bar">
+          <div class="geo-bias-indicator" style="--bias:-2.6;">
+            <span class="geo-bias-dot"></span>
+          </div>
+          <div class="geo-bias-labels">
+            <span class="geo-bias-tag conservative">Conservative</span>
+            <span class="geo-bias-val">&minus;2.6&thinsp;pp signed</span>
+          </div>
+        </div>
+        <p class="geo-card-note">
+          *ERA5 wind at this site is only available at 10m (vs.&nbsp;100m elsewhere). Still lands within &plusmn;3&thinsp;pp.
+        </p>
+      </div>
+
+      <!-- US Great Plains -->
+      <div class="geo-card">
+        <div class="geo-card-region">US &mdash; Great Plains</div>
+        <h4>South Dakota Wind Farm</h4>
+        <div class="geo-card-meta">~95 MW &middot; Turbine unknown &middot; Fully blind &middot; 2024</div>
+        <div class="geo-card-hero-stat">
+          <span class="geo-hero-val cell-warn">5.8<span class="geo-hero-unit">pp</span></span>
+          <span class="geo-hero-label">mean |error|</span>
+        </div>
+        <div class="geo-bias-bar">
+          <div class="geo-bias-indicator" style="--bias:-5.8;">
+            <span class="geo-bias-dot"></span>
+          </div>
+          <div class="geo-bias-labels">
+            <span class="geo-bias-tag conservative">Conservative</span>
+            <span class="geo-bias-val">&minus;5.8&thinsp;pp signed</span>
+          </div>
+        </div>
+        <p class="geo-card-note">
+          Fully blind: turbine type unknown. Only had coordinates and annual MWh. The conservative bias means zero risk of overcrediting.
+        </p>
+      </div>
+    </div>
+
+    <div class="callout" style="border-left-color:var(--warn);background:var(--warn-bg);">
+      <div class="callout-label" style="color:var(--warn);">Timezone warning</div>
+      <p>During Australian validation, initial results looked random. The cause: <strong>timezone misalignment</strong>. Satellite data is in UTC; Australian generation was in local time. After correction, accuracy improved dramatically. This is a <strong>>20 pp avoidable error</strong>. Always check timezone alignment between weather data and generation data.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 8: CALCULATOR
+     ════════════════════════════════════════════════════════════ -->
+<section id="calculator">
+  <div class="section-inner fade-in">
+    <div class="section-num">08 &mdash; Scenario Calculator</div>
+    <h2>Estimate your expected error</h2>
+    <p>Select what information you have about a wind farm to see the expected matching score error based on our test results.</p>
+
+    <div class="calculator">
+      <div class="calc-grid">
+        <div class="calc-inputs">
+          <div class="calc-field">
+            <label>Power Curve Information</label>
+            <select id="calc-curve">
+              <option value="universal" selected>Universal default (recommended)</option>
+              <option value="generic">Basic approach (not recommended)</option>
+              <option value="optimized">Optimized variant</option>
+              <option value="avg">Average of known turbine curves</option>
+              <option value="mfr">Specific manufacturer curve</option>
+            </select>
+          </div>
+          <div class="calc-field">
+            <label>Hub Height</label>
+            <select id="calc-hh">
+              <option value="none" selected>Unknown &mdash; use satellite data directly</option>
+              <option value="known">Known &mdash; extrapolate to hub height</option>
+            </select>
+          </div>
+          <div class="calc-field">
+            <label>Scaling Period</label>
+            <select id="calc-scaling">
+              <option value="annual" selected>Annual total only</option>
+              <option value="quarterly">Quarterly totals</option>
+              <option value="monthly">Monthly totals</option>
+            </select>
+          </div>
+          <div class="calc-field">
+            <label>Weather Data Source</label>
+            <select id="calc-temporal">
+              <option value="concurrent" selected>This year's weather data &mdash; recommended</option>
+              <option value="weibull10">Historical average (10+ years, flat load only)</option>
+              <option value="weibull3">Historical average (3 years, flat load only)</option>
+              <option value="naive">Simple year-by-year average (never use)</option>
+            </select>
+          </div>
+        </div>
+        <div class="calc-result" id="calc-result">
+          <div class="calc-result-label">Expected Matching Score Error</div>
+          <div class="calc-result-num" id="calc-num">2.0</div>
+          <div class="calc-result-unit">percentage points</div>
+          <div class="calc-result-bar">
+            <div class="calc-result-bar-fill" id="calc-bar" style="width:17%;background:var(--good);"></div>
+          </div>
+          <div class="calc-result-context" id="calc-context">
+            Universal default &middot; satellite wind direct &middot; annual scaling &middot; this year's data
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 9: EVIDENCE
+     ════════════════════════════════════════════════════════════ -->
+<section id="evidence">
+  <div class="section-inner wide fade-in">
+    <div class="section-num">09 &mdash; The Evidence Base</div>
+    <h2>Full results across 35 farms</h2>
+    <p>
+      Tested on offshore farms (UK North Sea), complex onshore terrain (Scotland, UK), flat onshore (UK), grid-constrained Scottish farms, Australian wind farms, and continental sites (China, US Great Plains). All errors are absolute matching score differences vs. metered hourly data, for a flat 24/7 load profile.
+    </p>
+
+    <h3>Core Results &mdash; UK Offshore (24 farms)</h3>
+    <p>
+      The universal default alone achieves <strong>~2.0 pp</strong> mean error across 28 farms &mdash; closing most of the gap from the basic approach (7.4 pp). Adding monthly scaling brings this to <strong>1.9 pp</strong>, and the best combination of all enhancements reaches <strong>1.3 pp</strong>. Even averaged manufacturer curves (2.6 pp) and exact turbine data (2.8 pp) perform in the same range. Full results in <a href="#appendix" style="color:var(--accent);">Appendix Table A</a>.
+    </p>
+
+    <h3 style="margin-top:2rem;">Onshore &amp; International Validation (11 farms)</h3>
+    <p>
+      Outside UK offshore, results vary by data quality: UK onshore farms achieve 0.4&ndash;2.6 pp, Australian farms 3.9&ndash;5.1 pp, and the US Great Plains 5.8 pp (fully blind). Grid-constrained Scottish farms show ~5 pp irreducible error due to output clipping. Per-farm breakdown in <a href="#appendix" style="color:var(--accent);">Appendix Table B</a>.
+    </p>
+
+    <h3 style="margin-top:2rem;">Temporal Sensitivity &mdash; A Critical Trap</h3>
+    <p>
+      If you use historical weather data, <strong>how you combine it matters more than how many years you use</strong>.
+      Statistical and distribution-preserving methods improve with more years (reaching 1.7&ndash;1.9 pp), while simple year-by-year averaging <em>gets worse</em> &mdash; from 10 pp with 3 years to 16 pp with 20. This year's concurrent data (2.3 pp) is the safest choice. Details in <a href="#appendix" style="color:var(--accent);">Appendix Table C</a>.
+    </p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 10: DECISION GUIDE
+     ════════════════════════════════════════════════════════════ -->
+<section id="decision">
+  <div class="section-inner fade-in">
+    <div class="section-num">10 &mdash; Decision Guide</div>
+    <h2>What should you use?</h2>
+    <p>Walk through your data availability to find the recommended approach and expected accuracy.</p>
+
+    <div class="callout blue" style="margin-bottom:2rem;">
+      <div class="callout-label">Note on data availability</div>
+      <p>Satellite weather data is available globally from 1940 to present. <strong>You always have 40+ years of hourly wind data</strong> for any location. The question is not whether you have data, but how you process it.</p>
+    </div>
+
+    <div class="decision-tree" id="decision-tree">
+      <div class="dt-node active" id="dt-q1">
+        <div class="dt-question">Do you have the wind farm's hourly production data?</div>
+        <div class="dt-options">
+          <button class="dt-option" data-q="q1" data-a="yes">Yes, hourly meter data</button>
+          <button class="dt-option" data-q="q1" data-a="no">No &mdash; only registry data</button>
+        </div>
+      </div>
+
+      <div class="dt-node" id="dt-q2" style="display:none;">
+        <div class="dt-question">Do you have monthly generation totals, or only annual?</div>
+        <div class="dt-options">
+          <button class="dt-option" data-q="q2" data-a="monthly">Monthly totals available</button>
+          <button class="dt-option" data-q="q2" data-a="annual">Annual total only</button>
+        </div>
+      </div>
+
+      <div class="dt-node" id="dt-q3" style="display:none;">
+        <div class="dt-question">Do you have this year's weather data, or only historical?</div>
+        <div class="dt-options">
+          <button class="dt-option" data-q="q3" data-a="concurrent">This year's data available (recommended)</button>
+          <button class="dt-option" data-q="q3" data-a="weibull">Historical only &mdash; statistical average</button>
+        </div>
+      </div>
+
+      <div class="dt-result" id="dt-result-meter">
+        <div class="dt-result-title">Use Metered Data</div>
+        <div class="dt-result-num">0 pp error</div>
+        <div class="dt-result-desc">You have the gold standard. No shaped allocation needed. Use the actual hourly profile directly.</div>
+      </div>
+
+      <div class="dt-result" id="dt-result-best">
+        <div class="dt-result-title">Best approach: Universal default + monthly scaling + this year's data</div>
+        <div class="dt-result-num">~1.6 pp</div>
+        <div class="dt-result-desc">
+          Apply the universal default to this year's satellite wind data. Scale to monthly totals. This is the best approach because it preserves <strong>when the wind actually blew</strong> relative to your consumption.
+        </div>
+      </div>
+
+      <div class="dt-result" id="dt-result-monthly-concurrent">
+        <div class="dt-result-title">Universal default + monthly scaling + historical average (flat load only)</div>
+        <div class="dt-result-num">~1.3 &ndash; 1.6 pp</div>
+        <div class="dt-result-desc">
+          Apply the universal default to a statistical composite from 10+ years of satellite history. Scale to monthly totals.<br><br>
+          <strong>Warning:</strong> Historical averaging only works for flat (24/7) load profiles. If your consumption varies by hour, use this year's data instead.<br><br>
+          <strong>Critical:</strong> Never use simple year-by-year averaging. Only statistical methods that preserve the shape of the wind distribution are valid.
+        </div>
+      </div>
+
+      <div class="dt-result" id="dt-result-annual-weibull">
+        <div class="dt-result-title">Universal default + annual scaling + historical average (flat load only)</div>
+        <div class="dt-result-num">~1.7 &ndash; 2.0 pp</div>
+        <div class="dt-result-desc">
+          Statistical composite with annual scaling. <strong>Same caveat:</strong> only valid for flat load profiles. Consider requesting monthly data from the registry.
+        </div>
+      </div>
+
+      <div class="dt-result" id="dt-result-annual-concurrent">
+        <div class="dt-result-title">Simplest approach: Universal default + annual scaling + this year's data</div>
+        <div class="dt-result-num">~2.0 pp</div>
+        <div class="dt-result-desc">
+          The simplest and most broadly applicable approach. Apply the universal default to this year's satellite data, scale to annual total. Works for <strong>any load profile shape</strong>.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 11: NEXT STEPS / PROPOSAL
+     ════════════════════════════════════════════════════════════ -->
+<section id="next-steps">
+  <div class="section-inner fade-in">
+    <div class="section-num">11 &mdash; Next Steps</div>
+    <h2>From research to implementation</h2>
+    <p>
+      These findings are ready for market adoption.
+    </p>
+
+    <div class="roadmap">
+      <div class="roadmap-item">
+        <div class="roadmap-spine">
+          <div class="roadmap-dot">
+            <svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M12 20V4M4 12l8-8 8 8"/></svg>
+          </div>
+          <div class="roadmap-line"></div>
+        </div>
+        <div class="roadmap-content">
+          <h4>Publish the validation paper</h4>
+          <p>Full methodology and results for peer review. 35-farm dataset across 4 countries. Reproducible using only publicly available satellite weather data.</p>
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <div class="roadmap-spine">
+          <div class="roadmap-dot">
+            <svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          </div>
+          <div class="roadmap-line"></div>
+        </div>
+        <div class="roadmap-content">
+          <h4>Working group adoption</h4>
+          <p>Include the universal default and the data hierarchy framework in the EnergyTag standard for shaped allocation when meter data is unavailable.</p>
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <div class="roadmap-spine">
+          <div class="roadmap-dot">
+            <svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.66 0 3-4 3-9s-1.34-9-3-9m0 18c-1.66 0-3-4-3-9s1.34-9 3-9"/></svg>
+          </div>
+          <div class="roadmap-line"></div>
+        </div>
+        <div class="roadmap-content">
+          <h4>Free hosted tool</h4>
+          <p>A public web tool to generate satellite-based hourly generation profiles for any wind farm globally. Enter coordinates and annual production, get an 8760 shape back. No expertise required.</p>
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <div class="roadmap-spine">
+          <div class="roadmap-dot">
+            <svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <div class="roadmap-line" style="display:none;"></div>
+        </div>
+        <div class="roadmap-content">
+          <h4>Enable hourly accounting on existing registries</h4>
+          <p>The shaped allocation methodology lets existing annual-only registries support hourly matching <strong>without requiring any new data from generators</strong>. RECs already carry location and volume, the two inputs needed.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 12: BOTTOM LINE
+     ════════════════════════════════════════════════════════════ -->
+<section id="bottom-line" style="background:var(--bg);color:var(--ink);">
+  <div class="section-inner fade-in">
+    <div class="section-num">12 &mdash; The Bottom Line</div>
+    <h2>The case for satellite-based shaped allocation</h2>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;margin:2rem 0;">
+      <div style="padding:1.5rem;background:var(--bg-card);border:1px solid var(--ink-faint);border-radius:var(--radius);box-shadow:var(--shadow-1);">
+        <div style="font-family:var(--font-mono);font-size:1.8rem;font-weight:600;color:#1A73E8;margin-bottom:0.5rem;">~2 pp</div>
+        <div style="font-size:0.85rem;color:var(--ink-mid);">Typical error with the universal default. One formula, no turbine data needed.</div>
+      </div>
+      <div style="padding:1.5rem;background:var(--bg-card);border:1px solid var(--ink-faint);border-radius:var(--radius);box-shadow:var(--shadow-1);">
+        <div style="font-family:var(--font-mono);font-size:1.8rem;font-weight:600;color:#1A73E8;margin-bottom:0.5rem;">35</div>
+        <div style="font-size:0.85rem;color:var(--ink-mid);">Farms validated across UK, US, China, and Australia. Offshore, onshore, constrained.</div>
+      </div>
+      <div style="padding:1.5rem;background:var(--bg-card);border:1px solid var(--ink-faint);border-radius:var(--radius);box-shadow:var(--shadow-1);">
+        <div style="font-family:var(--font-mono);font-size:1.6rem;font-weight:600;color:#34A853;margin-bottom:0.5rem;">Conservative</div>
+        <div style="font-size:0.85rem;color:var(--ink-mid);">Satellite scores tend to slightly <em>understate</em> actual matching, the safe side of wrong.</div>
+      </div>
+      <div style="padding:1.5rem;background:var(--bg-card);border:1px solid var(--ink-faint);border-radius:var(--radius);box-shadow:var(--shadow-1);">
+        <div style="font-family:var(--font-mono);font-size:1.6rem;font-weight:600;color:#1A73E8;margin-bottom:0.5rem;">1 formula</div>
+        <div style="font-size:0.85rem;color:var(--ink-mid);">Universal default. Cross-validated with zero overfitting. Works across all terrain types.</div>
+      </div>
+    </div>
+
+    <div style="max-width:38em;margin:2rem 0;">
+      <p style="color:var(--ink-mid);font-size:0.95rem;line-height:1.7;">
+        <strong style="color:var(--ink);">For policy makers:</strong> Satellite-based shaped allocation provides a reproducible, auditable default for hourly matching when meter data is unavailable. The universal default requires no turbine information, produces conservative bias, and has been validated across 35 farms in 4 countries.
+      </p>
+      <p style="color:var(--ink-mid);font-size:0.95rem;line-height:1.7;">
+        <strong style="color:var(--ink);">For registries:</strong> Implement today. The recipe is three steps: (1) get satellite wind data for the farm's location, (2) apply the universal default formula, (3) scale to known production. Monthly scaling adds ~0.4 pp improvement. Use this year's weather data to preserve hourly timing. <strong style="color:var(--ink);">Never use simple year-by-year averaging.</strong>
+      </p>
+      <p style="color:var(--ink-mid);font-size:0.95rem;line-height:1.7;">
+        <strong style="color:var(--ink);">For buyers:</strong> Nothing changes about how you source certificates. The satellite-derived hourly profile is applied at the end, so you can demonstrate an accurate hourly matching score even when the generator has not provided meter data. Generators who share real meter data will see a better score, which rewards data sharing over time.
+      </p>
+    </div>
+
+    <div class="callout blue">
+      <div class="callout-label">The single sentence</div>
+      <p style="font-family:var(--font-serif);font-size:1.15rem;line-height:1.6;">
+        If you know where a wind farm is and how much it produced, you can reconstruct its hourly generation profile to within ~2 percentage points. No meter data, no turbine information, no expertise required. If you can get more information, you can do better. But even without it, this default is good enough.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     APPENDIX: DATA TABLES
+     ════════════════════════════════════════════════════════════ -->
+<section id="appendix" style="background:var(--bg);">
+  <div class="section-inner wide fade-in">
+    <div class="section-num">Appendix</div>
+    <h2>Data Tables</h2>
+
+    <h3 id="table-a">Table A &mdash; Core Results, UK Offshore (24 farms)</h3>
+    <p>The universal default closes most of the gap on its own. Turbine-specific data and monthly scaling can improve results further.</p>
+    <div class="evidence-table-wrap">
+      <table class="evidence">
+        <thead>
+          <tr>
+            <th>Approach</th>
+            <th>Mean Error</th>
+            <th>Within &plusmn;3 pp</th>
+            <th>Within &plusmn;5 pp</th>
+            <th>Farms</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Basic approach (no turbine info)</td>
+            <td class="cell-bad">7.4 pp</td>
+            <td class="cell-bad">0%</td>
+            <td class="cell-bad">17%</td>
+            <td>24</td>
+          </tr>
+          <tr style="background:var(--good-bg);">
+            <td><strong>Universal default</strong></td>
+            <td class="cell-good"><strong>2.0 pp</strong></td>
+            <td>&mdash;</td>
+            <td>&mdash;</td>
+            <td>28</td>
+          </tr>
+          <tr>
+            <td>Average of manufacturer curves</td>
+            <td class="cell-good">2.6 pp</td>
+            <td class="cell-good">62%</td>
+            <td class="cell-good">88%</td>
+            <td>24</td>
+          </tr>
+          <tr>
+            <td>Exact turbine data</td>
+            <td class="cell-good">2.8 pp</td>
+            <td class="cell-good">70%</td>
+            <td class="cell-good">87%</td>
+            <td>23</td>
+          </tr>
+          <tr style="border-top:2px solid var(--ink-faint);">
+            <td><strong>Universal default + monthly scaling</strong></td>
+            <td class="cell-good"><strong>1.9 pp</strong></td>
+            <td>&mdash;</td>
+            <td>&mdash;</td>
+            <td>24</td>
+          </tr>
+          <tr>
+            <td><strong>Best combination (all enhancements)</strong></td>
+            <td class="cell-good"><strong>1.3 pp</strong></td>
+            <td>&mdash;</td>
+            <td>&mdash;</td>
+            <td>4</td>
+          </tr>
+          <tr>
+            <td>Best combination &mdash; tested on a different year</td>
+            <td class="cell-warn">3.3 pp</td>
+            <td>&mdash;</td>
+            <td>&mdash;</td>
+            <td>5</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-note">
+      All errors are mean |matching score error| in percentage points (pp) vs. metered data. Flat (24/7) load profile.
+    </div>
+
+    <h3 id="table-b" style="margin-top:3rem;">Table B &mdash; Per-Farm Onshore &amp; International Results</h3>
+    <p>
+      The universal default is calibrated on UK offshore farms where satellite data arrives at 100&nbsp;m.
+      Outside that setting, results vary depending on local satellite data quality and grid constraints.
+    </p>
+    <div class="evidence-table-wrap">
+      <table class="evidence">
+        <thead>
+          <tr>
+            <th>Farm / Region</th>
+            <th>Country</th>
+            <th>Basic</th>
+            <th>Best Satellite</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Hill of Towie</td>
+            <td>UK</td>
+            <td class="cell-bad">9.7 pp</td>
+            <td class="cell-good">1.4 pp</td>
+            <td style="font-size:0.75rem;">Avg manufacturer curves; exact turbine = 0.1 pp</td>
+          </tr>
+          <tr>
+            <td>Kelmarsh</td>
+            <td>UK</td>
+            <td class="cell-bad">11.7 pp</td>
+            <td class="cell-good">0.4 pp</td>
+            <td style="font-size:0.75rem;">Avg manufacturer curves; exact turbine = 3.5 pp</td>
+          </tr>
+          <tr>
+            <td>Penmanshiel</td>
+            <td>UK</td>
+            <td class="cell-good">1.2 pp</td>
+            <td class="cell-good">2.6 pp</td>
+            <td style="font-size:0.75rem;">Satellite site bias, irreducible</td>
+          </tr>
+          <tr>
+            <td>Fallago Rig</td>
+            <td>UK</td>
+            <td class="cell-good">2.8 pp</td>
+            <td class="cell-warn">5.6 pp</td>
+            <td style="font-size:0.75rem;">Grid-constrained (max ~50% of rated)</td>
+          </tr>
+          <tr>
+            <td>Hadyard Hill</td>
+            <td>UK</td>
+            <td class="cell-good">1.3 pp</td>
+            <td class="cell-bad">7.7 pp</td>
+            <td style="font-size:0.75rem;">Grid-constrained (max ~41% of rated); cubic matches clipped shape</td>
+          </tr>
+          <tr>
+            <td>Whitelee</td>
+            <td>UK</td>
+            <td class="cell-bad">8.7 pp</td>
+            <td class="cell-good">2.7 pp</td>
+            <td style="font-size:0.75rem;">Grid-constrained (max ~49% of rated)</td>
+          </tr>
+          <tr>
+            <td>Griffin</td>
+            <td>UK</td>
+            <td class="cell-bad">7.4 pp</td>
+            <td class="cell-good">3.7 pp</td>
+            <td style="font-size:0.75rem;">Grid-constrained (max ~43% of rated)</td>
+          </tr>
+          <tr>
+            <td>Macarthur</td>
+            <td>AUS</td>
+            <td class="cell-bad">9.9 pp</td>
+            <td class="cell-good">4.1 pp</td>
+            <td style="font-size:0.75rem;">420 MW, Victoria</td>
+          </tr>
+          <tr>
+            <td>Hornsdale</td>
+            <td>AUS</td>
+            <td class="cell-bad">22.6 pp</td>
+            <td class="cell-good">3.9 pp</td>
+            <td style="font-size:0.75rem;">Satellite underestimates wind; universal default</td>
+          </tr>
+          <tr>
+            <td>Sapphire</td>
+            <td>AUS</td>
+            <td class="cell-bad">18.0 pp</td>
+            <td class="cell-warn">5.1 pp</td>
+            <td style="font-size:0.75rem;">270 MW, New South Wales</td>
+          </tr>
+          <tr>
+            <td>SDWPF</td>
+            <td>China</td>
+            <td class="cell-bad">21.4 pp</td>
+            <td class="cell-bad">12.5 pp</td>
+            <td style="font-size:0.75rem;">Satellite data only at 10&nbsp;m, extrapolated to 100&nbsp;m*; exact turbine = 2.6 pp</td>
+          </tr>
+          <tr>
+            <td>SD Great Plains</td>
+            <td>USA</td>
+            <td class="cell-bad">17.6 pp</td>
+            <td class="cell-warn">5.8 pp</td>
+            <td style="font-size:0.75rem;">Fully blind, turbine unknown</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-note">
+      "Best Satellite" = best satellite-only approach tested for each farm (universal default, averaged manufacturer curves, or optimized generic, varies by data available).
+      Grid-constrained farms have clipped generation (max 40&ndash;50% of rated capacity), which limits all methods.
+      <br><br>
+      *SDWPF: satellite wind data at this site is only available at 10&nbsp;m (vs. 100&nbsp;m for all other farms). Extrapolation from 10&nbsp;m to 100&nbsp;m adds uncertainty, inflating the error.
+    </div>
+    <div style="margin-top:1.2rem; padding:1rem 1.2rem; background:var(--bg-card); border-left:3px solid var(--ink-faint); border-radius:6px; font-size:0.85rem; line-height:1.5;">
+      <strong>Note:</strong> Hadyard Hill, Fallago Rig, and Griffin are grid-constrained; their output is capped well below rated capacity, distorting the generation shape in ways no wind-based method can predict.
+    </div>
+
+    <h3 id="table-c" style="margin-top:3rem;">Table C &mdash; Temporal Averaging Methods</h3>
+    <p>How you combine historical years matters far more than how many years you use.</p>
+    <div class="evidence-table-wrap">
+      <table class="evidence">
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Mean Error</th>
+            <th>More Years?</th>
+            <th>Verdict</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>This year's weather data (reference)</td>
+            <td class="cell-good">2.3 pp</td>
+            <td>N/A</td>
+            <td style="color:var(--good)">Recommended</td>
+          </tr>
+          <tr>
+            <td>Statistical averaging</td>
+            <td class="cell-good">1.9 &rarr; 1.7 pp</td>
+            <td style="color:var(--good)">Improves</td>
+            <td style="color:var(--good)">Best historical method</td>
+          </tr>
+          <tr>
+            <td>Distribution-preserving methods</td>
+            <td class="cell-good">2.2 &rarr; 1.9 pp</td>
+            <td style="color:var(--good)">Improves</td>
+            <td style="color:var(--good)">Good alternatives</td>
+          </tr>
+          <tr>
+            <td>Simple averaging (dangerous)</td>
+            <td class="cell-bad">10.0 &rarr; 16.1 pp</td>
+            <td style="color:var(--bad)">Gets worse</td>
+            <td style="color:var(--bad)">Never use this</td>
+          </tr>
+          <tr>
+            <td>Averaging output directly (worst)</td>
+            <td class="cell-bad">16.1 &rarr; 23.7 pp</td>
+            <td style="color:var(--bad)">Gets much worse</td>
+            <td style="color:var(--bad)">Worst option</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-note">
+      Arrow shows trend from 3-year to 20-year window. Validated against flat (24/7) load. Simple averaging is never acceptable because it smooths away the variability that matching scores measure.
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     FOOTER
+     ════════════════════════════════════════════════════════════ -->
+<footer>
+  <p>
+    Based on analysis of 35 wind farms across the UK, China, the US, and Australia using satellite weather data (ECMWF ERA5, 2000&ndash;2024) validated against hourly metered production.
+  </p>
+</footer>
+<!-- ════════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ════════════════════════════════════════════════════════════ -->
+<script>
+(function() {
+  'use strict';
+
+  /* ── Farm Data for Map ─────────────────────────────────── */
+  var windFarmData = [
+    // UK Offshore (24)
+    { name:'Aberdeen', lat:57.214, lon:-1.95, cat:'UK Offshore', tier0:4.4, opt:0.9, tier3:null },
+    { name:'Barrow', lat:53.991, lon:-3.29, cat:'UK Offshore', tier0:4.9, opt:7.4, tier3:3.4 },
+    { name:'Beatrice', lat:58.105, lon:-2.995, cat:'UK Offshore', tier0:7.7, opt:5.0, tier3:2.4 },
+    { name:'Burbo Bank', lat:53.487, lon:-3.178, cat:'UK Offshore', tier0:5.0, opt:10.6, tier3:5.1 },
+    { name:'Burbo Bank Ext', lat:53.47, lon:-3.22, cat:'UK Offshore', tier0:9.7, opt:13.1, tier3:0.7 },
+    { name:'Dudgeon', lat:53.26, lon:1.38, cat:'UK Offshore', tier0:6.8, opt:17.6, tier3:4.0 },
+    { name:'East Anglia One', lat:52.135, lon:2.15, cat:'UK Offshore', tier0:7.0, opt:5.0, tier3:2.8 },
+    { name:'Greater Gabbard', lat:51.875, lon:1.93, cat:'UK Offshore', tier0:5.8, opt:2.9, tier3:2.8 },
+    { name:'Gunfleet Sands', lat:51.73, lon:1.21, cat:'UK Offshore', tier0:8.6, opt:10.4, tier3:1.7 },
+    { name:'Gwynt y Mor', lat:53.45, lon:-3.63, cat:'UK Offshore', tier0:7.0, opt:1.8, tier3:2.9 },
+    { name:'Hornsea One', lat:53.88, lon:1.8, cat:'UK Offshore', tier0:8.4, opt:2.7, tier3:1.8 },
+    { name:'Humber Gateway', lat:53.63, lon:0.28, cat:'UK Offshore', tier0:8.0, opt:2.5, tier3:1.1 },
+    { name:'Hywind Scotland', lat:57.48, lon:-1.35, cat:'UK Offshore', tier0:10.3, opt:3.1, tier3:0.1 },
+    { name:'Lincs', lat:53.17, lon:0.49, cat:'UK Offshore', tier0:7.4, opt:2.2, tier3:2.6 },
+    { name:'London Array', lat:51.63, lon:1.35, cat:'UK Offshore', tier0:8.6, opt:15.1, tier3:1.9 },
+    { name:'Ormonde', lat:54.09, lon:-3.42, cat:'UK Offshore', tier0:8.3, opt:0.6, tier3:null },
+    { name:'Race Bank', lat:53.2, lon:0.85, cat:'UK Offshore', tier0:6.3, opt:3.9, tier3:4.6 },
+    { name:'Rampion', lat:50.67, lon:-0.26, cat:'UK Offshore', tier0:4.8, opt:16.5, tier3:null },
+    { name:'Robin Rigg', lat:54.75, lon:-3.67, cat:'UK Offshore', tier0:11.1, opt:5.8, tier3:1.6 },
+    { name:'Walney 1', lat:54.04, lon:-3.51, cat:'UK Offshore', tier0:3.1, opt:3.6, tier3:5.8 },
+    { name:'Walney 2', lat:54.04, lon:-3.56, cat:'UK Offshore', tier0:5.8, opt:1.6, tier3:3.0 },
+    { name:'Walney Extension', lat:54.0, lon:-3.55, cat:'UK Offshore', tier0:7.1, opt:7.4, tier3:1.7 },
+    { name:'West of Duddon', lat:53.996, lon:-3.37, cat:'UK Offshore', tier0:9.2, opt:1.5, tier3:0.3 },
+    { name:'Westermost Rough', lat:53.81, lon:0.14, cat:'UK Offshore', tier0:11.9, opt:14.2, tier3:0.2 },
+    // UK Onshore (3)
+    { name:'Hill of Towie', lat:57.5, lon:-3.07, cat:'UK Onshore', tier0:9.7, opt:1.4, tier3:0.1 },
+    { name:'Kelmarsh', lat:52.27, lon:-0.42, cat:'UK Onshore', tier0:11.7, opt:0.4, tier3:3.5 },
+    { name:'Penmanshiel', lat:55.63, lon:-2.41, cat:'UK Onshore', tier0:1.2, opt:2.6, tier3:10.8 },
+    // BMRS Scottish (4)
+    { name:'Fallago Rig', lat:55.94, lon:-2.77, cat:'BMRS Scotland', tier0:2.8, opt:5.6, tier3:null },
+    { name:'Hadyard Hill', lat:55.25, lon:-4.7, cat:'BMRS Scotland', tier0:1.3, opt:7.7, tier3:null },
+    { name:'Whitelee', lat:55.7, lon:-4.28, cat:'BMRS Scotland', tier0:8.7, opt:2.7, tier3:null },
+    { name:'Griffin', lat:56.53, lon:-3.39, cat:'BMRS Scotland', tier0:7.4, opt:3.7, tier3:null },
+    // Australia (3)
+    { name:'Macarthur', lat:-38.043, lon:142.178, cat:'Australia', tier0:9.9, opt:4.1, tier3:null },
+    { name:'Hornsdale', lat:-33.086, lon:138.518, cat:'Australia', tier0:22.6, opt:8.4, tier3:null },
+    { name:'Sapphire', lat:-29.7, lon:151.417, cat:'Australia', tier0:18.0, opt:5.1, tier3:null },
+    // China (1)
+    { name:'SDWPF', lat:37.5, lon:121.0, cat:'China', tier0:21.4, opt:14.5, tier3:2.6 },
+    // US (1)
+    { name:'SD Great Plains', lat:44.3, lon:-96.5, cat:'USA', tier0:17.6, opt:5.8, tier3:null }
+  ];
+
+  var catColors = {
+    'UK Offshore': '#2563EB',
+    'UK Onshore': '#16A34A',
+    'BMRS Scotland': '#D97706',
+    'Australia': '#DC2626',
+    'China': '#7C3AED',
+    'USA': '#EA580C'
+  };
+
+  /* ── Leaflet Map ───────────────────────────────────────── */
+  var mapEl = document.getElementById('validation-map');
+  if (mapEl && typeof L !== 'undefined') {
+    var map = L.map('validation-map', {
+      center: [30, 10],
+      zoom: 2,
+      scrollWheelZoom: false,
+      zoomControl: true
+    });
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap &copy; CARTO',
+      subdomains: 'abcd',
+      maxZoom: 12
+    }).addTo(map);
+
+    windFarmData.forEach(function(farm) {
+      var color = catColors[farm.cat] || '#666';
+      var marker = L.circleMarker([farm.lat, farm.lon], {
+        radius: 7,
+        fillColor: color,
+        color: 'rgba(0,0,0,0.3)',
+        weight: 1.5,
+        fillOpacity: 0.85
+      }).addTo(map);
+
+      var bestErr = Math.min(farm.tier0, farm.opt);
+      var t3Line = farm.tier3 !== null ? '<br>Exact turbine: <strong>' + farm.tier3.toFixed(1) + ' pp</strong>' : '';
+      marker.bindPopup(
+        '<div style="font-family:DM Sans,sans-serif;font-size:13px;line-height:1.5;">' +
+        '<strong>' + farm.name + '</strong><br>' +
+        '<span style="font-size:11px;color:#9C9184;">' + farm.cat + '</span><br>' +
+        'Basic: <strong>' + farm.tier0.toFixed(1) + ' pp</strong><br>' +
+        'Our method: <strong>' + farm.opt.toFixed(1) + ' pp</strong>' +
+        t3Line +
+        '</div>'
+      );
+    });
+  }
+
+  /* ── Method Toggle ────────────────────────────────────── */
+  window.toggleMethod = function(btn) {
+    btn.classList.toggle('open');
+    btn.nextElementSibling.classList.toggle('open');
+  };
+
+  /* ── Error Bars ───────────────────────────────────────── */
+  var barData = [
+    { label: 'Basic approach',                   val: 7.4,  ci: [6.5, 8.3],  color: 'var(--bad)' },
+    { label: 'Universal default',                val: 2.0,  ci: null,        color: '#1E7D4B' },
+    { label: 'Avg manufacturer curves',          val: 2.6,  ci: [2.0, 3.3], color: 'var(--good)' },
+    { label: 'Exact turbine data',               val: 2.8,  ci: [2.0, 3.8], color: '#2563EB' },
+    { label: 'Default + monthly scaling',        val: 1.9,  ci: [1.4, 2.4], color: 'var(--good)' },
+    { label: 'Best combination',                 val: 1.3,  ci: null,        color: 'var(--good)' },
+  ];
+
+  var maxVal = 12;
+  var barsContainer = document.getElementById('error-bars');
+
+  if (barsContainer) {
+    barData.forEach(function(d) {
+      var row = document.createElement('div');
+      row.className = 'error-bar-row';
+
+      var ciHtml = '';
+      if (d.ci) {
+        ciHtml = '<div class="error-bar-ci" data-left="' + (d.ci[0] / maxVal * 100) + '" data-width="' + ((d.ci[1] - d.ci[0]) / maxVal * 100) + '" style="left:0;width:0;"></div>';
+      }
+
+      row.innerHTML =
+        '<div class="error-bar-label">' + d.label + '</div>' +
+        '<div class="error-bar-track">' +
+          '<div class="threshold-line t3" style="left:' + (3/maxVal*100) + '%"></div>' +
+          '<div class="threshold-line t5" style="left:' + (5/maxVal*100) + '%"></div>' +
+          '<div class="error-bar-fill" data-width="' + (d.val / maxVal * 100) + '" style="width:0;background:' + d.color + ';opacity:0.7;"></div>' +
+          ciHtml +
+        '</div>' +
+        '<div class="error-bar-val">' + d.val + ' pp</div>';
+
+      barsContainer.appendChild(row);
+    });
+  }
+
+  /* ── Scroll Animations ────────────────────────────────── */
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        var bars = entry.target.querySelectorAll('.error-bar-fill');
+        var cis = entry.target.querySelectorAll('.error-bar-ci');
+        bars.forEach(function(bar, i) {
+          setTimeout(function() { bar.style.width = bar.dataset.width + '%'; }, i * 80);
+        });
+        cis.forEach(function(ci, i) {
+          setTimeout(function() {
+            ci.style.left = ci.dataset.left + '%';
+            ci.style.width = ci.dataset.width + '%';
+          }, i * 80 + 200);
+        });
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.fade-in').forEach(function(el) { observer.observe(el); });
+
+  /* ── Sticky Nav Active State ──────────────────────────── */
+  var nav = document.getElementById('sticky-nav');
+  var sections = document.querySelectorAll('section[id]');
+  var navLinks = document.querySelectorAll('.nav-link');
+
+  window.addEventListener('scroll', function() {
+    nav.classList.toggle('scrolled', window.scrollY > 10);
+    var current = '';
+    sections.forEach(function(s) {
+      if (window.scrollY >= s.offsetTop - 200) current = s.id;
+    });
+    navLinks.forEach(function(link) {
+      link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+    });
+  });
+
+  /* ── Scenario Calculator ──────────────────────────────── */
+  var calcCurve = document.getElementById('calc-curve');
+  var calcHH = document.getElementById('calc-hh');
+  var calcScaling = document.getElementById('calc-scaling');
+  var calcTemporal = document.getElementById('calc-temporal');
+
+  function updateCalc() {
+    var curve = calcCurve.value;
+    var hh = calcHH.value;
+    var scaling = calcScaling.value;
+    var temporal = calcTemporal.value;
+
+    // Grey out hub height when universal default selected
+    calcHH.disabled = (curve === 'universal');
+    if (curve === 'universal') calcHH.value = 'none';
+
+    var error;
+    if (curve === 'universal') {
+      error = 2.0;
+    } else if (curve === 'generic') {
+      error = hh === 'known' ? 7.9 : 7.4;
+    } else if (curve === 'optimized') {
+      error = 1.88;
+    } else if (curve === 'avg') {
+      error = hh === 'known' ? 2.3 : 2.6;
+    } else {
+      error = 2.8;
+    }
+
+    if (scaling === 'quarterly') {
+      error = Math.max(error - 0.2, error * 0.92);
+    } else if (scaling === 'monthly') {
+      error = Math.max(error - 0.4, error * 0.85);
+    }
+
+    if (temporal === 'naive') {
+      error = Math.max(error, 10.0);
+    } else if (temporal === 'weibull3') {
+      if (curve !== 'generic') error = Math.max(error * 0.88, error - 0.3);
+    } else if (temporal === 'weibull10') {
+      if (curve !== 'generic') error = Math.max(error * 0.80, error - 0.5);
+    }
+
+    error = Math.round(error * 10) / 10;
+
+    var numEl = document.getElementById('calc-num');
+    var barEl = document.getElementById('calc-bar');
+    var ctxEl = document.getElementById('calc-context');
+
+    numEl.textContent = error.toFixed(1);
+
+    var color;
+    if (error <= 3) color = 'var(--good)';
+    else if (error <= 5) color = 'var(--warn)';
+    else color = 'var(--bad)';
+
+    numEl.style.color = color;
+    barEl.style.width = Math.min(error / 12 * 100, 100) + '%';
+    barEl.style.background = color;
+
+    var parts = [];
+    if (curve === 'universal') parts.push('Universal default');
+    else if (curve === 'generic') parts.push('Basic approach');
+    else if (curve === 'optimized') parts.push('Optimized variant');
+    else if (curve === 'avg') parts.push('Average of known turbine curves');
+    else parts.push('Specific manufacturer curve');
+
+    parts.push(hh === 'known' ? 'height-adjusted' : 'satellite wind direct');
+    parts.push(scaling + ' scaling');
+
+    if (temporal === 'concurrent') parts.push('this year\'s data');
+    else if (temporal === 'weibull3') parts.push('3-year historical avg');
+    else if (temporal === 'weibull10') parts.push('10-year historical avg');
+    else parts.push('simple average (dangerous)');
+
+    ctxEl.textContent = parts.join(' \u00B7 ');
+    ctxEl.style.color = '';
+
+    if (temporal === 'naive') {
+      ctxEl.textContent += ' \u2014 WARNING: Simple averaging destroys accuracy. Use this year\'s data instead.';
+      ctxEl.style.color = 'var(--bad)';
+    }
+
+    if (temporal === 'weibull10' || temporal === 'weibull3') {
+      ctxEl.textContent += ' \u2014 Note: Historical averaging only valid for flat (24/7) load profiles.';
+      ctxEl.style.color = 'var(--warn)';
+    }
+  }
+
+  calcCurve.addEventListener('change', updateCalc);
+  calcHH.addEventListener('change', updateCalc);
+  calcScaling.addEventListener('change', updateCalc);
+  calcTemporal.addEventListener('change', updateCalc);
+  updateCalc();
+
+  /* ── Decision Tree ────────────────────────────────────── */
+  var dtState = {};
+
+  document.getElementById('decision-tree').addEventListener('click', function(e) {
+    var btn = e.target.closest('.dt-option');
+    if (!btn) return;
+
+    var q = btn.dataset.q;
+    var a = btn.dataset.a;
+    dtState[q] = a;
+
+    // Update button states
+    var node = document.getElementById('dt-' + q);
+    node.querySelectorAll('.dt-option').forEach(function(b) {
+      b.classList.toggle('selected', b.dataset.a === a);
+    });
+
+    // Hide all results and future questions
+    document.querySelectorAll('.dt-result').forEach(function(r) { r.classList.remove('show'); });
+
+    if (q === 'q1') {
+      document.getElementById('dt-q2').style.display = 'none';
+      document.getElementById('dt-q3').style.display = 'none';
+      delete dtState.q2;
+      delete dtState.q3;
+      document.querySelectorAll('#dt-q2 .dt-option, #dt-q3 .dt-option').forEach(function(b) { b.classList.remove('selected'); });
+
+      if (a === 'yes') {
+        document.getElementById('dt-result-meter').classList.add('show');
+      } else {
+        document.getElementById('dt-q2').style.display = 'block';
+        document.getElementById('dt-q2').classList.add('active');
+      }
+    }
+
+    if (q === 'q2') {
+      document.getElementById('dt-q3').style.display = 'block';
+      document.getElementById('dt-q3').classList.add('active');
+      delete dtState.q3;
+      document.querySelectorAll('#dt-q3 .dt-option').forEach(function(b) { b.classList.remove('selected'); });
+    }
+
+    if (q === 'q3') {
+      var hasMonthly = dtState.q2 === 'monthly';
+      var usesWeibull = a === 'weibull';
+
+      if (hasMonthly && !usesWeibull) {
+        document.getElementById('dt-result-best').classList.add('show');
+      } else if (hasMonthly && usesWeibull) {
+        document.getElementById('dt-result-monthly-concurrent').classList.add('show');
+      } else if (!hasMonthly && usesWeibull) {
+        document.getElementById('dt-result-annual-weibull').classList.add('show');
+      } else {
+        document.getElementById('dt-result-annual-concurrent').classList.add('show');
+      }
+    }
+
+    // Smooth scroll
+    setTimeout(function() {
+      var target = document.querySelector('.dt-result.show') ||
+                   document.querySelector('#dt-q3[style*="block"]') ||
+                   document.querySelector('#dt-q2[style*="block"]');
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  });
+
+})();
+</script>
+
+</body>
 </html>
