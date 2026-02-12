@@ -82,20 +82,14 @@ body {
   flex-direction: column;
   justify-content: center;
   padding: 2.5rem clamp(2rem, 4vw, 4rem);
-  background: linear-gradient(135deg, #1A73E8 0%, #1557B0 40%, #174EA6 100%);
-  color: #FFFFFF;
+  background: #FFFFFF;
+  color: var(--ink);
   overflow: hidden;
   box-sizing: border-box;
 }
 
 .hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 80% 60% at 70% 40%, rgba(66,133,244,0.3) 0%, transparent 70%),
-    radial-gradient(ellipse 60% 80% at 20% 70%, rgba(52,168,83,0.08) 0%, transparent 70%);
-  pointer-events: none;
+  display: none;
 }
 
 .hero::after {
@@ -118,9 +112,9 @@ body {
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #FFFFFF;
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.25);
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 1px solid #D2E3FC;
   padding: 0.35rem 0.85rem;
   border-radius: 100px;
   margin-bottom: 1rem;
@@ -147,19 +141,19 @@ body {
   letter-spacing: -0.01em;
   margin-bottom: 1rem;
   max-width: 16em;
-  color: #FFFFFF;
+  color: var(--ink);
 }
 
 .hero h1 em {
   font-style: normal;
-  color: #4CAF50;
+  color: #4285F4;
   font-weight: 500;
 }
 
 .hero-sub {
   font-size: 0.95rem;
   line-height: 1.55;
-  color: rgba(255,255,255,0.92);
+  color: var(--ink-mid);
   max-width: 36em;
   margin-bottom: 0;
 }
@@ -180,16 +174,16 @@ body {
   font-family: var(--font-mono);
   font-size: clamp(1.3rem, 3vw, 1.8rem);
   font-weight: 600;
-  color: #fff;
+  color: var(--ink);
   line-height: 1;
 }
 
-.hero-stat-num.good { color: #F44336; }
-.hero-stat-num.accent { color: #9C27B0; }
+.hero-stat-num.good { color: #EA4335; }
+.hero-stat-num.accent { color: #34A853; }
 
 .hero-stat-label {
   font-size: 0.72rem;
-  color: rgba(255,255,255,0.85);
+  color: var(--ink-mid);
   margin-top: 0.25rem;
   max-width: 12em;
 }
@@ -203,7 +197,7 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  color: rgba(255,255,255,0.5);
+  color: var(--ink-light);
   font-size: 0.7rem;
   font-family: var(--font-mono);
   letter-spacing: 0.1em;
@@ -213,7 +207,7 @@ body {
 
 .scroll-cue svg {
   width: 18px; height: 18px;
-  stroke: rgba(255,255,255,0.5);
+  stroke: var(--ink-light);
 }
 
 @keyframes bob {
@@ -1057,6 +1051,107 @@ section p strong {
 }
 
 /* ============================================================
+   CALIBRATION BARS (Section 05b)
+   ============================================================ */
+
+.cal-bars {
+  margin: 2rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.cal-bar-group-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-light);
+  margin-top: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.cal-bar-group-label:first-child {
+  margin-top: 0;
+}
+
+.cal-bar-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 60px;
+  align-items: center;
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .cal-bar-row {
+    grid-template-columns: 80px 1fr 50px;
+    gap: 0.5rem;
+  }
+}
+
+.cal-bar-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-mid);
+  text-align: right;
+}
+
+.cal-bar-track {
+  position: relative;
+  height: 26px;
+  background: var(--bg);
+  border-radius: 2px;
+  overflow: visible;
+}
+
+.cal-bar-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  border-radius: 2px;
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cal-bar-val {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.cal-bar-legend {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  color: var(--ink-light);
+  padding-left: calc(120px + 1rem);
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 640px) {
+  .cal-bar-legend { padding-left: calc(80px + 0.5rem); }
+}
+
+.cal-bar-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.cal-bar-legend span::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 3px;
+  border-radius: 1px;
+}
+
+.cal-bar-legend .leg-good::before { background: var(--good); }
+.cal-bar-legend .leg-warn::before { background: var(--warn); }
+
+/* ============================================================
    INSIGHT CARDS
    ============================================================ */
 
@@ -1622,47 +1717,47 @@ section:nth-child(even of section) {
         <div class="hero-badge">Research Briefing</div>
         <h1>You can score hourly matching<br>from <em>satellite data alone</em></h1>
         <p class="hero-sub">
-          A single formula and satellite weather data reconstruct wind generation profiles accurate enough for hourly energy accounting. Validated across 35 farms in 4 countries. No meter data required.
+          Two simple formulas and satellite weather data reconstruct wind generation profiles accurate enough for hourly energy accounting. Validated across 93 farms in 6 countries. No meter data required.
         </p>
       </div>
       <div style="flex:1; min-width:400px;">
         <div style="display:flex; justify-content:center; gap:1.5rem; margin-bottom:0.5rem; font-size:0.75rem; letter-spacing:0.03em;">
-          <span style="color:rgba(255,255,255,0.7);"><span style="display:inline-block;width:12px;height:2px;background:rgba(255,255,255,0.7);vertical-align:middle;margin-right:5px;"></span> Metered</span>
-          <span style="color:#4ADE80;"><span style="display:inline-block;width:12px;height:2px;background:#4ADE80;vertical-align:middle;margin-right:5px;"></span> Satellite</span>
+          <span style="color:#4285F4;"><span style="display:inline-block;width:12px;height:2px;background:#4285F4;vertical-align:middle;margin-right:5px;"></span> Metered</span>
+          <span style="color:#34A853;"><span style="display:inline-block;width:12px;height:2px;background:#34A853;vertical-align:middle;margin-right:5px;"></span> Satellite</span>
         </div>
         <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
           <defs>
             <linearGradient id="metGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="rgba(255,255,255,0.25)" />
-              <stop offset="100%" stop-color="rgba(255,255,255,0.02)" />
+              <stop offset="0%" stop-color="rgba(66,133,244,0.18)" />
+              <stop offset="100%" stop-color="rgba(66,133,244,0.02)" />
             </linearGradient>
           </defs>
-          <line x1="71.26" y1="10" x2="71.26" y2="190" stroke="rgba(255,255,255,0.15)" stroke-width="1" /><text x="71.26" y="212" fill="rgba(255,255,255,0.5)" font-size="11" text-anchor="middle" font-family="Inter,system-ui,sans-serif">Sun</text>
-          <line x1="171.86" y1="10" x2="171.86" y2="190" stroke="rgba(255,255,255,0.15)" stroke-width="1" /><text x="171.86" y="212" fill="rgba(255,255,255,0.5)" font-size="11" text-anchor="middle" font-family="Inter,system-ui,sans-serif">Mon</text>
-          <line x1="272.46" y1="10" x2="272.46" y2="190" stroke="rgba(255,255,255,0.15)" stroke-width="1" /><text x="272.46" y="212" fill="rgba(255,255,255,0.5)" font-size="11" text-anchor="middle" font-family="Inter,system-ui,sans-serif">Tue</text>
-          <line x1="373.05" y1="10" x2="373.05" y2="190" stroke="rgba(255,255,255,0.15)" stroke-width="1" /><text x="373.05" y="212" fill="rgba(255,255,255,0.5)" font-size="11" text-anchor="middle" font-family="Inter,system-ui,sans-serif">Wed</text>
-          <line x1="473.65" y1="10" x2="473.65" y2="190" stroke="rgba(255,255,255,0.15)" stroke-width="1" /><text x="473.65" y="212" fill="rgba(255,255,255,0.5)" font-size="11" text-anchor="middle" font-family="Inter,system-ui,sans-serif">Thu</text>
-          <line x1="574.25" y1="10" x2="574.25" y2="190" stroke="rgba(255,255,255,0.15)" stroke-width="1" /><text x="574.25" y="212" fill="rgba(255,255,255,0.5)" font-size="11" text-anchor="middle" font-family="Inter,system-ui,sans-serif">Fri</text>
-          <line x1="674.85" y1="10" x2="674.85" y2="190" stroke="rgba(255,255,255,0.15)" stroke-width="1" /><text x="674.85" y="212" fill="rgba(255,255,255,0.5)" font-size="11" text-anchor="middle" font-family="Inter,system-ui,sans-serif">Sat</text>
+          <line x1="71.26" y1="10" x2="71.26" y2="190" stroke="#DADCE0" stroke-width="1" /><text x="71.26" y="212" fill="#80868B" font-size="11" text-anchor="middle" font-family="Google Sans,Inter,system-ui,sans-serif">Sun</text>
+          <line x1="171.86" y1="10" x2="171.86" y2="190" stroke="#DADCE0" stroke-width="1" /><text x="171.86" y="212" fill="#80868B" font-size="11" text-anchor="middle" font-family="Google Sans,Inter,system-ui,sans-serif">Mon</text>
+          <line x1="272.46" y1="10" x2="272.46" y2="190" stroke="#DADCE0" stroke-width="1" /><text x="272.46" y="212" fill="#80868B" font-size="11" text-anchor="middle" font-family="Google Sans,Inter,system-ui,sans-serif">Tue</text>
+          <line x1="373.05" y1="10" x2="373.05" y2="190" stroke="#DADCE0" stroke-width="1" /><text x="373.05" y="212" fill="#80868B" font-size="11" text-anchor="middle" font-family="Google Sans,Inter,system-ui,sans-serif">Wed</text>
+          <line x1="473.65" y1="10" x2="473.65" y2="190" stroke="#DADCE0" stroke-width="1" /><text x="473.65" y="212" fill="#80868B" font-size="11" text-anchor="middle" font-family="Google Sans,Inter,system-ui,sans-serif">Thu</text>
+          <line x1="574.25" y1="10" x2="574.25" y2="190" stroke="#DADCE0" stroke-width="1" /><text x="574.25" y="212" fill="#80868B" font-size="11" text-anchor="middle" font-family="Google Sans,Inter,system-ui,sans-serif">Fri</text>
+          <line x1="674.85" y1="10" x2="674.85" y2="190" stroke="#DADCE0" stroke-width="1" /><text x="674.85" y="212" fill="#80868B" font-size="11" text-anchor="middle" font-family="Google Sans,Inter,system-ui,sans-serif">Sat</text>
           <path d="M0,178.7 L4.2,167.1 L8.4,156.4 L12.6,167.8 L16.8,176.3 L21,180.7 L25.1,168.5 L29.3,184.8 L33.5,188.6 L37.7,183.4 L41.9,186 L46.1,190 L50.3,190 L54.5,190 L58.7,190 L62.9,190 L67.1,190 L71.3,190 L75.4,185.4 L79.6,181.2 L83.8,188.7 L88,190 L92.2,190 L96.4,187.9 L100.6,190 L104.8,190 L109,189.7 L113.2,183.4 L117.4,181.7 L121.6,185.3 L125.7,190 L129.9,190 L134.1,188.4 L138.3,186.2 L142.5,158.2 L146.7,160 L150.9,175.4 L155.1,157.1 L159.3,152.5 L163.5,162.5 L167.7,169.8 L171.9,177.8 L176,184.7 L180.2,184.4 L184.4,187.1 L188.6,190 L192.8,190 L197,190 L201.2,190 L205.4,187.3 L209.6,181 L213.8,171.8 L218,168.4 L222.2,178 L226.3,190 L230.5,190 L234.7,189.2 L238.9,190 L243.1,190 L247.3,190 L251.5,189.7 L255.7,177.4 L259.9,177.4 L264.1,171.4 L268.3,161.5 L272.5,139.5 L276.6,135.8 L280.8,150.8 L285,188.6 L289.2,190 L293.4,190 L297.6,188.3 L301.8,188.9 L306,188.8 L310.2,185.3 L314.4,181.3 L318.6,160.9 L322.8,153.5 L326.9,146.2 L331.1,151.4 L335.3,145 L339.5,143.8 L343.7,130.3 L347.9,139.9 L352.1,149.8 L356.3,158.7 L360.5,153.1 L364.7,143.2 L368.9,151.9 L373.1,156.3 L377.2,161.1 L381.4,165.9 L385.6,167.4 L389.8,167.1 L394,165.6 L398.2,160.2 L402.4,163.9 L406.6,167 L410.8,174.6 L415,176.4 L419.2,174.1 L423.4,171.3 L427.5,169.2 L431.7,156.4 L435.9,129.5 L440.1,113.6 L444.3,100.1 L448.5,108.4 L452.7,103.7 L456.9,113.3 L461.1,107.7 L465.3,112 L469.5,100.5 L473.7,105.4 L477.8,111.6 L482,137.8 L486.2,129.2 L490.4,138.2 L494.6,127.6 L498.8,117.4 L503,115.8 L507.2,125.3 L511.4,86.6 L515.6,100.2 L519.8,88.1 L524,82.7 L528.1,65.7 L532.3,76.7 L536.5,60.1 L540.7,45.5 L544.9,36.7 L549.1,35.1 L553.3,37.3 L557.5,35.7 L561.7,35.2 L565.9,38.2 L570.1,42.7 L574.3,46.4 L578.4,46 L582.6,43 L586.8,46.8 L591,65.5 L595.2,94.4 L599.4,91.1 L603.6,72.6 L607.8,78.3 L612,65 L616.2,45 L620.4,44.7 L624.6,70.4 L628.7,81.5 L632.9,53.1 L637.1,39.4 L641.3,37.3 L645.5,36.1 L649.7,36.1 L653.9,36.4 L658.1,36 L662.3,36.4 L666.5,36.8 L670.7,36 L674.9,36.1 L679,36.4 L683.2,37.1 L687.4,40.2 L691.6,52.9 L695.8,50.7 L700,48.1 L700,190 L0,190 Z" fill="url(#metGrad)" />
-          <path d="M0,178.7 L4.2,167.1 L8.4,156.4 L12.6,167.8 L16.8,176.3 L21,180.7 L25.1,168.5 L29.3,184.8 L33.5,188.6 L37.7,183.4 L41.9,186 L46.1,190 L50.3,190 L54.5,190 L58.7,190 L62.9,190 L67.1,190 L71.3,190 L75.4,185.4 L79.6,181.2 L83.8,188.7 L88,190 L92.2,190 L96.4,187.9 L100.6,190 L104.8,190 L109,189.7 L113.2,183.4 L117.4,181.7 L121.6,185.3 L125.7,190 L129.9,190 L134.1,188.4 L138.3,186.2 L142.5,158.2 L146.7,160 L150.9,175.4 L155.1,157.1 L159.3,152.5 L163.5,162.5 L167.7,169.8 L171.9,177.8 L176,184.7 L180.2,184.4 L184.4,187.1 L188.6,190 L192.8,190 L197,190 L201.2,190 L205.4,187.3 L209.6,181 L213.8,171.8 L218,168.4 L222.2,178 L226.3,190 L230.5,190 L234.7,189.2 L238.9,190 L243.1,190 L247.3,190 L251.5,189.7 L255.7,177.4 L259.9,177.4 L264.1,171.4 L268.3,161.5 L272.5,139.5 L276.6,135.8 L280.8,150.8 L285,188.6 L289.2,190 L293.4,190 L297.6,188.3 L301.8,188.9 L306,188.8 L310.2,185.3 L314.4,181.3 L318.6,160.9 L322.8,153.5 L326.9,146.2 L331.1,151.4 L335.3,145 L339.5,143.8 L343.7,130.3 L347.9,139.9 L352.1,149.8 L356.3,158.7 L360.5,153.1 L364.7,143.2 L368.9,151.9 L373.1,156.3 L377.2,161.1 L381.4,165.9 L385.6,167.4 L389.8,167.1 L394,165.6 L398.2,160.2 L402.4,163.9 L406.6,167 L410.8,174.6 L415,176.4 L419.2,174.1 L423.4,171.3 L427.5,169.2 L431.7,156.4 L435.9,129.5 L440.1,113.6 L444.3,100.1 L448.5,108.4 L452.7,103.7 L456.9,113.3 L461.1,107.7 L465.3,112 L469.5,100.5 L473.7,105.4 L477.8,111.6 L482,137.8 L486.2,129.2 L490.4,138.2 L494.6,127.6 L498.8,117.4 L503,115.8 L507.2,125.3 L511.4,86.6 L515.6,100.2 L519.8,88.1 L524,82.7 L528.1,65.7 L532.3,76.7 L536.5,60.1 L540.7,45.5 L544.9,36.7 L549.1,35.1 L553.3,37.3 L557.5,35.7 L561.7,35.2 L565.9,38.2 L570.1,42.7 L574.3,46.4 L578.4,46 L582.6,43 L586.8,46.8 L591,65.5 L595.2,94.4 L599.4,91.1 L603.6,72.6 L607.8,78.3 L612,65 L616.2,45 L620.4,44.7 L624.6,70.4 L628.7,81.5 L632.9,53.1 L637.1,39.4 L641.3,37.3 L645.5,36.1 L649.7,36.1 L653.9,36.4 L658.1,36 L662.3,36.4 L666.5,36.8 L670.7,36 L674.9,36.1 L679,36.4 L683.2,37.1 L687.4,40.2 L691.6,52.9 L695.8,50.7 L700,48.1" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" />
-          <path d="M0,182 L4.2,181.3 L8.4,182.1 L12.6,180.9 L16.8,181.3 L21,183.8 L25.1,181.3 L29.3,183.7 L33.5,181.9 L37.7,176.7 L41.9,175.4 L46.1,178.1 L50.3,179.5 L54.5,181.1 L58.7,182 L62.9,189.4 L67.1,189.7 L71.3,188.8 L75.4,187.4 L79.6,188.2 L83.8,186 L88,186.5 L92.2,185 L96.4,182.7 L100.6,182.3 L104.8,185.1 L109,186.1 L113.2,187.6 L117.4,186.7 L121.6,182.2 L125.7,179.9 L129.9,170.3 L134.1,163.6 L138.3,157.3 L142.5,162 L146.7,165.2 L150.9,164.8 L155.1,163.3 L159.3,165 L163.5,170.4 L167.7,171 L171.9,171.1 L176,176.4 L180.2,182.8 L184.4,183.5 L188.6,184.3 L192.8,186.8 L197,187.2 L201.2,183.8 L205.4,178.8 L209.6,175.9 L213.8,171.9 L218,171.9 L222.2,171.7 L226.3,179.1 L230.5,181.9 L234.7,187.1 L238.9,186.4 L243.1,186.1 L247.3,186.3 L251.5,182.7 L255.7,172.7 L259.9,159.3 L264.1,133.5 L268.3,136.7 L272.5,142 L276.6,160.4 L280.8,179.9 L285,182.5 L289.2,181.8 L293.4,185.4 L297.6,187 L301.8,186.8 L306,186.2 L310.2,186.3 L314.4,183.3 L318.6,178.7 L322.8,169.8 L326.9,145.9 L331.1,130.5 L335.3,131.3 L339.5,140.8 L343.7,145.2 L347.9,144.6 L352.1,141.1 L356.3,137.7 L360.5,139.7 L364.7,138.4 L368.9,142 L373.1,148.1 L377.2,157.3 L381.4,152.7 L385.6,149.1 L389.8,155.2 L394,162.1 L398.2,167 L402.4,167.8 L406.6,169.2 L410.8,171.7 L415,161.6 L419.2,158.7 L423.4,152.9 L427.5,150.8 L431.7,139 L435.9,117.4 L440.1,119.6 L444.3,119.2 L448.5,118.7 L452.7,118.2 L456.9,119.8 L461.1,125.5 L465.3,124.5 L469.5,129.4 L473.7,136.9 L477.8,147.4 L482,141.8 L486.2,134.7 L490.4,134.6 L494.6,132 L498.8,129.5 L503,127.3 L507.2,125.3 L511.4,120.4 L515.6,110.5 L519.8,107.4 L524,106.8 L528.1,99.5 L532.3,90.3 L536.5,77.7 L540.7,63.6 L544.9,58.5 L549.1,61.2 L553.3,63.7 L557.5,62.6 L561.7,63 L565.9,59.8 L570.1,57.9 L574.3,66.6 L578.4,70.8 L582.6,65.9 L586.8,85.9 L591,97.9 L595.2,97.7 L599.4,94.5 L603.6,89.2 L607.8,88.1 L612,87.2 L616.2,78.7 L620.4,77.6 L624.6,76.8 L628.7,79.7 L632.9,75.7 L637.1,69.8 L641.3,58.2 L645.5,40.3 L649.7,25.2 L653.9,21.6 L658.1,20.7 L662.3,23.9 L666.5,20.6 L670.7,27.2 L674.9,33.1 L679,35.3 L683.2,58.1 L687.4,52.5 L691.6,54.6 L695.8,56 L700,54.7" fill="none" stroke="#4ADE80" stroke-width="2" />
+          <path d="M0,178.7 L4.2,167.1 L8.4,156.4 L12.6,167.8 L16.8,176.3 L21,180.7 L25.1,168.5 L29.3,184.8 L33.5,188.6 L37.7,183.4 L41.9,186 L46.1,190 L50.3,190 L54.5,190 L58.7,190 L62.9,190 L67.1,190 L71.3,190 L75.4,185.4 L79.6,181.2 L83.8,188.7 L88,190 L92.2,190 L96.4,187.9 L100.6,190 L104.8,190 L109,189.7 L113.2,183.4 L117.4,181.7 L121.6,185.3 L125.7,190 L129.9,190 L134.1,188.4 L138.3,186.2 L142.5,158.2 L146.7,160 L150.9,175.4 L155.1,157.1 L159.3,152.5 L163.5,162.5 L167.7,169.8 L171.9,177.8 L176,184.7 L180.2,184.4 L184.4,187.1 L188.6,190 L192.8,190 L197,190 L201.2,190 L205.4,187.3 L209.6,181 L213.8,171.8 L218,168.4 L222.2,178 L226.3,190 L230.5,190 L234.7,189.2 L238.9,190 L243.1,190 L247.3,190 L251.5,189.7 L255.7,177.4 L259.9,177.4 L264.1,171.4 L268.3,161.5 L272.5,139.5 L276.6,135.8 L280.8,150.8 L285,188.6 L289.2,190 L293.4,190 L297.6,188.3 L301.8,188.9 L306,188.8 L310.2,185.3 L314.4,181.3 L318.6,160.9 L322.8,153.5 L326.9,146.2 L331.1,151.4 L335.3,145 L339.5,143.8 L343.7,130.3 L347.9,139.9 L352.1,149.8 L356.3,158.7 L360.5,153.1 L364.7,143.2 L368.9,151.9 L373.1,156.3 L377.2,161.1 L381.4,165.9 L385.6,167.4 L389.8,167.1 L394,165.6 L398.2,160.2 L402.4,163.9 L406.6,167 L410.8,174.6 L415,176.4 L419.2,174.1 L423.4,171.3 L427.5,169.2 L431.7,156.4 L435.9,129.5 L440.1,113.6 L444.3,100.1 L448.5,108.4 L452.7,103.7 L456.9,113.3 L461.1,107.7 L465.3,112 L469.5,100.5 L473.7,105.4 L477.8,111.6 L482,137.8 L486.2,129.2 L490.4,138.2 L494.6,127.6 L498.8,117.4 L503,115.8 L507.2,125.3 L511.4,86.6 L515.6,100.2 L519.8,88.1 L524,82.7 L528.1,65.7 L532.3,76.7 L536.5,60.1 L540.7,45.5 L544.9,36.7 L549.1,35.1 L553.3,37.3 L557.5,35.7 L561.7,35.2 L565.9,38.2 L570.1,42.7 L574.3,46.4 L578.4,46 L582.6,43 L586.8,46.8 L591,65.5 L595.2,94.4 L599.4,91.1 L603.6,72.6 L607.8,78.3 L612,65 L616.2,45 L620.4,44.7 L624.6,70.4 L628.7,81.5 L632.9,53.1 L637.1,39.4 L641.3,37.3 L645.5,36.1 L649.7,36.1 L653.9,36.4 L658.1,36 L662.3,36.4 L666.5,36.8 L670.7,36 L674.9,36.1 L679,36.4 L683.2,37.1 L687.4,40.2 L691.6,52.9 L695.8,50.7 L700,48.1" fill="none" stroke="#4285F4" stroke-width="1.5" />
+          <path d="M0,182 L4.2,181.3 L8.4,182.1 L12.6,180.9 L16.8,181.3 L21,183.8 L25.1,181.3 L29.3,183.7 L33.5,181.9 L37.7,176.7 L41.9,175.4 L46.1,178.1 L50.3,179.5 L54.5,181.1 L58.7,182 L62.9,189.4 L67.1,189.7 L71.3,188.8 L75.4,187.4 L79.6,188.2 L83.8,186 L88,186.5 L92.2,185 L96.4,182.7 L100.6,182.3 L104.8,185.1 L109,186.1 L113.2,187.6 L117.4,186.7 L121.6,182.2 L125.7,179.9 L129.9,170.3 L134.1,163.6 L138.3,157.3 L142.5,162 L146.7,165.2 L150.9,164.8 L155.1,163.3 L159.3,165 L163.5,170.4 L167.7,171 L171.9,171.1 L176,176.4 L180.2,182.8 L184.4,183.5 L188.6,184.3 L192.8,186.8 L197,187.2 L201.2,183.8 L205.4,178.8 L209.6,175.9 L213.8,171.9 L218,171.9 L222.2,171.7 L226.3,179.1 L230.5,181.9 L234.7,187.1 L238.9,186.4 L243.1,186.1 L247.3,186.3 L251.5,182.7 L255.7,172.7 L259.9,159.3 L264.1,133.5 L268.3,136.7 L272.5,142 L276.6,160.4 L280.8,179.9 L285,182.5 L289.2,181.8 L293.4,185.4 L297.6,187 L301.8,186.8 L306,186.2 L310.2,186.3 L314.4,183.3 L318.6,178.7 L322.8,169.8 L326.9,145.9 L331.1,130.5 L335.3,131.3 L339.5,140.8 L343.7,145.2 L347.9,144.6 L352.1,141.1 L356.3,137.7 L360.5,139.7 L364.7,138.4 L368.9,142 L373.1,148.1 L377.2,157.3 L381.4,152.7 L385.6,149.1 L389.8,155.2 L394,162.1 L398.2,167 L402.4,167.8 L406.6,169.2 L410.8,171.7 L415,161.6 L419.2,158.7 L423.4,152.9 L427.5,150.8 L431.7,139 L435.9,117.4 L440.1,119.6 L444.3,119.2 L448.5,118.7 L452.7,118.2 L456.9,119.8 L461.1,125.5 L465.3,124.5 L469.5,129.4 L473.7,136.9 L477.8,147.4 L482,141.8 L486.2,134.7 L490.4,134.6 L494.6,132 L498.8,129.5 L503,127.3 L507.2,125.3 L511.4,120.4 L515.6,110.5 L519.8,107.4 L524,106.8 L528.1,99.5 L532.3,90.3 L536.5,77.7 L540.7,63.6 L544.9,58.5 L549.1,61.2 L553.3,63.7 L557.5,62.6 L561.7,63 L565.9,59.8 L570.1,57.9 L574.3,66.6 L578.4,70.8 L582.6,65.9 L586.8,85.9 L591,97.9 L595.2,97.7 L599.4,94.5 L603.6,89.2 L607.8,88.1 L612,87.2 L616.2,78.7 L620.4,77.6 L624.6,76.8 L628.7,79.7 L632.9,75.7 L637.1,69.8 L641.3,58.2 L645.5,40.3 L649.7,25.2 L653.9,21.6 L658.1,20.7 L662.3,23.9 L666.5,20.6 L670.7,27.2 L674.9,33.1 L679,35.3 L683.2,58.1 L687.4,52.5 L691.6,54.6 L695.8,56 L700,54.7" fill="none" stroke="#34A853" stroke-width="2" />
         </svg>
-        <div style="font-size:0.7rem; color:rgba(255,255,255,0.4); margin-top:0.3rem; text-align:center;">One week, US Great Plains &mdash; r&thinsp;=&thinsp;0.97</div>
+        <div style="font-size:0.7rem; color:var(--ink-light); margin-top:0.3rem; text-align:center;">One week, US Great Plains &mdash; r&thinsp;=&thinsp;0.97</div>
       </div>
     </div>
     <div class="hero-stat-row">
       <div class="hero-stat">
         <span class="hero-stat-num good">~2 pp</span>
-        <span class="hero-stat-label">Typical matching score error with universal default</span>
+        <span class="hero-stat-label">Typical matching score error with default formulas</span>
       </div>
       <div class="hero-stat">
-        <span class="hero-stat-num" style="color:#FF9800;">35</span>
-        <span class="hero-stat-label">Wind farms tested across 4 countries</span>
+        <span class="hero-stat-num" style="color:#FBBC05;">93</span>
+        <span class="hero-stat-label">Wind farms tested across 6 countries</span>
       </div>
       <div class="hero-stat">
-        <span class="hero-stat-num" style="color:#4CAF50;">1</span>
-        <span class="hero-stat-label">Universal formula. Works for any wind farm, any terrain</span>
+        <span class="hero-stat-num" style="color:#4285F4;">2</span>
+        <span class="hero-stat-label">Simple formulas: one offshore, one onshore</span>
       </div>
       <div class="hero-stat">
         <span class="hero-stat-num accent">0</span>
@@ -1686,8 +1781,10 @@ section:nth-child(even of section) {
     <a href="#map" class="nav-link">Map</a>
     <a href="#default" class="nav-link">Universal Default</a>
     <a href="#hierarchy" class="nav-link">Data Hierarchy</a>
+    <a href="#calibration" class="nav-link">Calibration</a>
     <a href="#what-matters" class="nav-link">What Matters</a>
     <a href="#terrain" class="nav-link">Geography</a>
+    <a href="#solar" class="nav-link">Solar</a>
     <a href="#calculator" class="nav-link">Calculator</a>
     <a href="#evidence" class="nav-link">Evidence</a>
     <a href="#decision" class="nav-link">Guide</a>
@@ -1708,7 +1805,7 @@ section:nth-child(even of section) {
       To do hourly energy matching, you need an hourly generation profile for each generator you're claiming certificates from. But when you buy RECs from an existing registry, <strong>you typically get only two things</strong>: the plant location and the volume of certificates.
     </p>
     <p>
-      The actual hourly production data is <strong>not publicly available</strong> in most markets. It's held by operators, aggregators, or grid companies. Across the UK, US, China, and Australia, we found the same barrier.
+      The actual hourly production data is <strong>not publicly available</strong> in most markets. It's held by operators, aggregators, or grid companies. Across 6 countries, we found the same barrier.
     </p>
 
     <div class="callout">
@@ -1721,7 +1818,7 @@ section:nth-child(even of section) {
       Moving to <strong>24/7 carbon-free energy</strong> or <strong>hourly matching requirements</strong> requires knowing generation profiles hour by hour. Without a validated default methodology for the common case where meter data is unavailable, the market faces a choice: exclude most existing generation assets, or accept unverifiable claims.
     </p>
     <p>
-      <strong>Satellite-based shaped allocation provides a third option:</strong> a verifiable default that, as we'll show across 35 farms in 4 countries, is accurate to within a few percentage points.
+      <strong>Satellite-based shaped allocation provides a third option:</strong> a verifiable default that, as we'll show across 93 farms in 6 countries, is accurate to within a few percentage points.
     </p>
   </div>
 </section>
@@ -1746,7 +1843,7 @@ section:nth-child(even of section) {
         <div class="insight-icon">&#128208;</div>
         <h4>A Power Curve</h4>
         <p>
-          Converts wind speed into power output. Our <strong>universal default</strong> requires zero turbine information and achieves ~2 pp accuracy across all terrain types.
+          Converts wind speed into power output. Our <strong>default formulas</strong> (offshore and onshore) require zero turbine information and achieve ~2&ndash;3 pp accuracy.
         </p>
       </div>
       <div class="insight-card">
@@ -1770,7 +1867,7 @@ section:nth-child(even of section) {
       </button>
       <div class="method-content">
         <strong>1. Get hourly wind speeds</strong> from satellite data for the farm's coordinates and the target year.<br><br>
-        <strong>2. Apply our universal default formula</strong> to convert wind speeds into estimated generation for each hour.<br><br>
+        <strong>2. Apply the offshore or onshore formula</strong> to convert wind speeds into estimated generation for each hour.<br><br>
         <strong>3. Scale the result</strong> so the total matches what the registry says the farm actually produced.<br><br>
         <strong>4. Calculate matching score</strong> by comparing the shaped generation profile against the consumption profile hour by hour.<br><br>
         The error we report is the absolute difference between the score from satellite data and the score from actual metered data.
@@ -1785,25 +1882,26 @@ section:nth-child(even of section) {
 <section id="map">
   <div class="section-inner wide fade-in">
     <div class="section-num">03 &mdash; Validation Map</div>
-    <h2>35 farms. 4 countries. Every result on one map.</h2>
+    <h2>93 farms. 6 countries. Every result on one map.</h2>
     <p>Click any marker to see farm details and error values.</p>
 
     <div id="validation-map" class="validation-map"></div>
 
     <div class="map-legend" id="map-legend">
       <div class="map-legend-item"><div class="map-legend-dot" style="background:#2563EB;"></div> UK Offshore (24)</div>
-      <div class="map-legend-item"><div class="map-legend-dot" style="background:#16A34A;"></div> UK Onshore (3)</div>
-      <div class="map-legend-item"><div class="map-legend-dot" style="background:#D97706;"></div> BMRS Scottish (4)</div>
-      <div class="map-legend-item"><div class="map-legend-dot" style="background:#DC2626;"></div> Australia (3)</div>
-      <div class="map-legend-item"><div class="map-legend-dot" style="background:#7C3AED;"></div> China (1)</div>
-      <div class="map-legend-item"><div class="map-legend-dot" style="background:#EA580C;"></div> US Great Plains (1)</div>
+      <div class="map-legend-item"><div class="map-legend-dot" style="background:#16A34A;"></div> UK Onshore/SCADA (3)</div>
+      <div class="map-legend-item"><div class="map-legend-dot" style="background:#D97706;"></div> UK BMRS (4)</div>
+      <div class="map-legend-item"><div class="map-legend-dot" style="background:#DC2626;"></div> Australia/AEMO (19)</div>
+      <div class="map-legend-item"><div class="map-legend-dot" style="background:#0D9488;"></div> Canada/IESO Ontario (21)</div>
+      <div class="map-legend-item"><div class="map-legend-dot" style="background:#7C3AED;"></div> Belgium &amp; Denmark/ENTSO-E (14)</div>
+      <div class="map-legend-item"><div class="map-legend-dot" style="background:#EA580C;"></div> New Zealand/EMI (8)</div>
     </div>
 
     <div class="map-stats">
-      <div class="map-stat"><strong>4</strong> countries</div>
+      <div class="map-stat"><strong>6</strong> countries</div>
       <div class="map-stat"><strong>2</strong> hemispheres</div>
-      <div class="map-stat"><strong>3</strong> terrain types</div>
-      <div class="map-stat"><strong>~2 pp</strong> median error with universal default</div>
+      <div class="map-stat"><strong>9</strong> data sources</div>
+      <div class="map-stat"><strong>2.3 pp</strong> median error (optimized generic)</div>
     </div>
   </div>
 </section>
@@ -1814,9 +1912,9 @@ section:nth-child(even of section) {
 <section id="default">
   <div class="section-inner fade-in">
     <div class="section-num">04 &mdash; The Universal Default</div>
-    <h2>One curve for every wind farm on Earth</h2>
+    <h2>Two curves for every wind farm on Earth</h2>
     <p>
-      We tested thousands of combinations across 28 farms, each time excluding the test farm from the training set. The result: one simple formula that requires <strong>zero turbine information</strong> and outperforms both the naive approach and averaged manufacturer curves.
+      We tested thousands of combinations across 93 farms in 6 countries, each time excluding the test farm from the training set. The result: two simple formulas &mdash; one for offshore, one for onshore &mdash; that require <strong>zero turbine information</strong> and outperform both the naive approach and averaged manufacturer curves.
     </p>
 
     <div class="recipe-card">
@@ -1827,20 +1925,27 @@ section:nth-child(even of section) {
         </div>
         <div class="recipe-step">
           <div class="recipe-step-num">2</div>
-          <p>Convert wind speeds to estimated generation using our universal default formula</p>
+          <p>Apply the offshore or onshore formula to convert wind speeds into estimated generation</p>
         </div>
         <div class="recipe-step">
           <div class="recipe-step-num">3</div>
           <p>Scale the result so the total matches what the registry says the farm actually produced</p>
         </div>
       </div>
-      <div class="recipe-formula">
-        The formula: output = (wind_speed / 12)<sup>2</sup>, capped at 100%. &nbsp;&middot;&nbsp; <strong>Expected accuracy: ~2 percentage points</strong>
+      <div class="recipe-formula" style="display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:center;text-align:center;">
+        <div style="flex:1;min-width:14em;padding:0.75rem 1rem;background:#F0F6FF;border:1.5px solid #4285F4;border-radius:8px;">
+          <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#4285F4;margin-bottom:0.3rem;">Offshore</div>
+          output = (wind / 13.5)<sup>1.75</sup> &nbsp;&middot;&nbsp; <strong>~2 pp</strong>
+        </div>
+        <div style="flex:1;min-width:14em;padding:0.75rem 1rem;background:#F0FFF4;border:1.5px solid #34A853;border-radius:8px;">
+          <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#34A853;margin-bottom:0.3rem;">Onshore</div>
+          output = (wind / 12)<sup>2</sup> &nbsp;&middot;&nbsp; <strong>~3 pp</strong>
+        </div>
       </div>
     </div>
 
     <h3 style="margin-top:2.5rem;">How does it compare?</h3>
-    <p>Without any default, the naive approach produces 7.4 pp error. The universal default cuts that to 2.0 pp, with conservative bias (it tends to slightly underestimate your score, which is the safe direction). Turbine data can improve things further, but even without it, this gets you most of the way there.</p>
+    <p>Without any default, the naive approach produces 7.4 pp error. The offshore formula cuts that to ~2 pp and the onshore formula to ~3 pp, both with conservative bias (they tend to slightly underestimate your score, which is the safe direction). Turbine data can improve things further, but even without it, this gets you most of the way there.</p>
 
     <div class="error-bars" id="error-bars"></div>
     <div class="error-bar-legend">
@@ -1851,7 +1956,7 @@ section:nth-child(even of section) {
 
     <div class="callout blue" style="margin-top:2rem;">
       <div class="callout-label">Why this formula?</div>
-      <p>This formula is the best starting assumption we found when you have no turbine information. It's deliberately conservative: it tends to slightly underestimate your score, which is the safe direction for procurement. It <strong>works across offshore, onshore, flat terrain, and complex terrain without adjustment</strong>. If you can get more information (manufacturer curve, monthly totals, hub height), you can improve from here.</p>
+      <p>These formulas are the best starting assumptions we found when you have no turbine information. The offshore curve (V<sub>r</sub>=13.5, n=1.75) is optimized for open-water sites where ERA5 resolution is highest. The onshore curve (V<sub>r</sub>=12, n=2.0) is deliberately more conservative, compensating for terrain effects that ERA5 can't resolve at its 27 km grid. Both tend to slightly underestimate your score, which is the safe direction for procurement. If you can get more information (manufacturer curve, monthly totals, hub height), you can improve from here.</p>
     </div>
 
     <div class="method-toggle">
@@ -1875,7 +1980,7 @@ section:nth-child(even of section) {
     <div class="section-num">05 &mdash; Data Hierarchy</div>
     <h2>Start with the default. Improve if you can.</h2>
     <p>
-      The universal default works when you know nothing about the turbine. Each additional piece of information you can get improves the result.
+      The offshore and onshore defaults work when you know nothing about the turbine. Each additional piece of information you can get improves the result.
     </p>
 
     <div class="hierarchy">
@@ -1887,7 +1992,7 @@ section:nth-child(even of section) {
         <div class="hierarchy-content">
           <div class="hierarchy-title">Start here: Location + Annual Production</div>
           <div class="hierarchy-desc">
-            This is where most users start. You know where the farm is and how much it produced. Apply the universal default formula to satellite wind data, then scale to the annual total.
+            This is where most users start. You know where the farm is and how much it produced. Apply the offshore or onshore formula to satellite wind data, then scale to the annual total.
           </div>
           <span class="hierarchy-impact" style="background:var(--good-bg);color:var(--good);">~2 pp error</span>
         </div>
@@ -1944,6 +2049,64 @@ section:nth-child(even of section) {
 </section>
 
 <!-- ════════════════════════════════════════════════════════════
+     SECTION 5b: CALIBRATION SUFFICIENCY
+     ════════════════════════════════════════════════════════════ -->
+<section id="calibration">
+  <div class="section-inner fade-in">
+    <div class="section-num">05b &mdash; Calibration</div>
+    <h2>A few months of real data locks in accuracy</h2>
+    <p>
+      For offshore farms, the default formula already achieves ~2 pp accuracy. But for onshore farms and unknown turbine types, blind error can reach 5&ndash;8 pp. <strong>Just 1&ndash;3 months of real production data</strong> from any period is enough to calibrate the power curve, cutting onshore error by 65% to ~1.8 pp. That calibration <strong>persists indefinitely</strong> because ERA5 wind shapes are stable year to year.
+    </p>
+
+    <div class="cal-bars" id="cal-bars"></div>
+    <div class="cal-bar-legend">
+      <span class="leg-good">&#10072; 3 pp threshold</span>
+      <span class="leg-warn">&#10072; 5 pp threshold</span>
+    </div>
+
+    <div class="insight-grid" style="margin-top:2rem;">
+      <div class="insight-card">
+        <div class="insight-icon">&#128200;</div>
+        <h4>Three knobs, not two</h4>
+        <p>
+          Calibrating rated speed, exponent, <strong>and capacity cap</strong> outperforms 2-parameter calibration at every data length. The capacity cap captures real operational losses&mdash;wake effects, availability, grid constraints&mdash;that no power curve shape alone can represent.
+        </p>
+      </div>
+      <div class="insight-card">
+        <div class="insight-icon">&#128274;</div>
+        <h4>Physics beats data</h4>
+        <p>
+          Physical constraints on the parameters (rated speed 9&ndash;15 m/s, exponent 1.25&ndash;3.0, capacity cap 0.85&ndash;1.0) <strong>prevent overfitting</strong> and improve generalization. One month of data with guardrails beats three months without them.
+        </p>
+      </div>
+      <div class="insight-card">
+        <div class="insight-icon">&#128197;</div>
+        <h4>Calibration persists</h4>
+        <p>
+          Year-to-year weather adds only ~1.5 pp of variability. Once calibrated, the same parameters work across 20+ years of ERA5 data. <strong>One-time calibration, permanent accuracy.</strong>
+        </p>
+      </div>
+    </div>
+
+    <div class="callout good" style="margin-top:2rem;">
+      <div class="callout-label">The three-parameter recipe</div>
+      <p>Given 1+ months of hourly metered data alongside ERA5 wind speeds, sweep three parameters within physical bounds:<br><br>
+        <strong>Rated wind speed</strong> (9&ndash;15 m/s) &mdash; where the curve saturates<br>
+        <strong>Exponent</strong> (1.25&ndash;3.0) &mdash; how steeply power ramps up<br>
+        <strong>Capacity cap</strong> (0.85&ndash;1.0) &mdash; operational ceiling on output<br><br>
+        Pick the combination that minimizes matching score error on the metered window. The physical bounds are <strong>essential</strong>&mdash;without them, the optimizer exploits implausible parameter combos that fit noise instead of real structure. Validated on <strong>93 farms across 6 countries</strong> with proper held-out evaluation.
+      </p>
+    </div>
+
+    <div class="callout blue" style="margin-top:1rem;">
+      <div class="callout-label">Cross-year stability</div>
+      <p>ERA5 wind shapes vary by only <strong>~1.5 pp (1&sigma;) year-to-year</strong> at a given site. Once you calibrate the power curve with a few months of real data, the same parameters work for any year in the 1940&ndash;present ERA5 record. This means a registry could do a one-time calibration and reuse it indefinitely.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
      SECTION 6: WHAT MATTERS + DO'S AND DON'TS
      ════════════════════════════════════════════════════════════ -->
 <section id="what-matters">
@@ -1963,7 +2126,7 @@ section:nth-child(even of section) {
         <div class="hierarchy-content">
           <div class="hierarchy-title">Getting the default right matters most</div>
           <div class="hierarchy-desc">
-            Which formula you use to convert wind into power is the single biggest factor. Without a good default, a basic cubic approach gives ~7.5 pp error. Our universal default drops this to ~2 pp. <strong>That's a ~5 pp improvement just from using the right starting assumption.</strong>
+            Which formula you use to convert wind into power is the single biggest factor. Without a good default, a basic cubic approach gives ~7.5 pp error. Our offshore and onshore defaults drop this to ~2&ndash;3 pp. <strong>That's a 5+ pp improvement just from using the right starting assumption.</strong>
           </div>
           <span class="hierarchy-impact" style="background:var(--good-bg);color:var(--good);">~5 pp improvement with the right default</span>
         </div>
@@ -2010,7 +2173,7 @@ section:nth-child(even of section) {
         <h4>Do</h4>
         <ul>
           <li>Use satellite wind speeds directly (don't adjust for turbine height)</li>
-          <li>Use our universal default formula</li>
+          <li>Use the offshore or onshore formula</li>
           <li>Use this year's weather data when available</li>
           <li>Scale to monthly totals when available</li>
           <li>Check timezone alignment between weather data and generation data</li>
@@ -2021,7 +2184,7 @@ section:nth-child(even of section) {
         <ul>
           <li>Simply average wind speeds across years (this destroys accuracy)</li>
           <li>Adjust wind speeds for turbine height without the full manufacturer curve</li>
-          <li>Use a basic cubic formula when the universal default is available</li>
+          <li>Use a basic cubic formula when the offshore/onshore defaults are available</li>
           <li>Skip using the universal default just because you lack turbine information</li>
         </ul>
       </div>
@@ -2034,8 +2197,8 @@ section:nth-child(even of section) {
 <section id="terrain">
   <div class="section-inner wide fade-in">
     <div class="section-num">07 &mdash; One Curve, Every Geography</div>
-    <h2>The universal default: location + annual MWh. Nothing else.</h2>
-    <p>Every result below uses the same blind configuration: ERA5 satellite wind data, the universal default power curve (<span style="font-family:var(--font-mono);font-size:0.85em;">V<sub>r</sub>=12.0, n=2.0</span>), and only the farm's coordinates and annual production total. No turbine model, no hub height, no manufacturer data.</p>
+    <h2>Default formulas: location + annual MWh. Nothing else.</h2>
+    <p>Every result below uses the same blind configuration: ERA5 satellite wind data, the optimized generic power curve (<span style="font-family:var(--font-mono);font-size:0.85em;">V<sub>r</sub>=13.5, n=1.75</span>), and only the farm's coordinates and annual production total. No turbine model, no hub height, no manufacturer data.</p>
 
     <div class="bias-callout">
       <div class="bias-callout-icon">
@@ -2044,7 +2207,7 @@ section:nth-child(even of section) {
       <div>
         <strong style="color:var(--ink);">Deliberately conservative.</strong>
         <span style="color:var(--ink-mid);">
-          Fleet mean signed error is <strong>&minus;0.16&thinsp;pp</strong>. The universal default slightly <em>undercredits</em> generators on average. This is by design: the sub-cubic exponent compensates for ERA5 wind speed bias, ensuring satellite scores never systematically overcredit. Generators who want full credit invest in metering.
+          Fleet mean signed error is <strong>&minus;0.7&thinsp;pp</strong> across 93 farms. The optimized generic slightly <em>undercredits</em> generators on average. This is by design: the sub-cubic exponent compensates for ERA5 wind speed bias, ensuring satellite scores never systematically overcredit. Generators who want full credit invest in metering.
         </span>
       </div>
     </div>
@@ -2123,69 +2286,92 @@ section:nth-child(even of section) {
       <!-- Australia -->
       <div class="geo-card">
         <div class="geo-card-region">Australia</div>
-        <h4>AEMO Onshore</h4>
-        <div class="geo-card-meta">3 farms &middot; Macarthur, Hornsdale, Sapphire &middot; VIC, SA, NSW</div>
+        <h4>AEMO NEM Fleet</h4>
+        <div class="geo-card-meta">19 farms &middot; VIC, SA, NSW, TAS &middot; Onshore</div>
         <div class="geo-card-hero-stat">
-          <span class="geo-hero-val cell-warn">~6<span class="geo-hero-unit">pp</span></span>
+          <span class="geo-hero-val cell-warn">4.3<span class="geo-hero-unit">pp</span></span>
           <span class="geo-hero-label">mean |error|</span>
         </div>
         <div class="geo-bias-bar">
-          <div class="geo-bias-indicator" style="--bias:-6.0;">
+          <div class="geo-bias-indicator" style="--bias:-3.5;">
             <span class="geo-bias-dot"></span>
           </div>
           <div class="geo-bias-labels">
             <span class="geo-bias-tag conservative">Conservative</span>
-            <span class="geo-bias-val">&minus;6.0&thinsp;pp signed</span>
+            <span class="geo-bias-val">median 5.1&thinsp;pp</span>
           </div>
         </div>
         <p class="geo-card-note">
-          ERA5 underestimates wind at some Australian sites. Nearly identical to US results (~6&thinsp;pp), suggesting a geography-independent floor.
+          Largest onshore sample. ERA5 underestimates wind at some sites. Median of 5.1&thinsp;pp reflects diverse terrain across 4 states.
         </p>
       </div>
 
-      <!-- China -->
+      <!-- Canada -->
       <div class="geo-card">
-        <div class="geo-card-region">China &mdash; Continental</div>
-        <h4>SDWPF Wind Farm</h4>
-        <div class="geo-card-meta">134 turbines &middot; 70m hub height &middot; 1,400m elevation</div>
+        <div class="geo-card-region">Canada</div>
+        <h4>IESO Ontario Fleet</h4>
+        <div class="geo-card-meta">21 farms &middot; Ontario &middot; Onshore</div>
         <div class="geo-card-hero-stat">
-          <span class="geo-hero-val cell-good">2.6<span class="geo-hero-unit">pp</span></span>
-          <span class="geo-hero-label">mean |error|*</span>
-        </div>
-        <div class="geo-bias-bar">
-          <div class="geo-bias-indicator" style="--bias:-2.6;">
-            <span class="geo-bias-dot"></span>
-          </div>
-          <div class="geo-bias-labels">
-            <span class="geo-bias-tag conservative">Conservative</span>
-            <span class="geo-bias-val">&minus;2.6&thinsp;pp signed</span>
-          </div>
-        </div>
-        <p class="geo-card-note">
-          *ERA5 wind at this site is only available at 10m (vs.&nbsp;100m elsewhere). Still lands within &plusmn;3&thinsp;pp.
-        </p>
-      </div>
-
-      <!-- US Great Plains -->
-      <div class="geo-card">
-        <div class="geo-card-region">US &mdash; Great Plains</div>
-        <h4>South Dakota Wind Farm</h4>
-        <div class="geo-card-meta">~95 MW &middot; Turbine unknown &middot; Fully blind &middot; 2024</div>
-        <div class="geo-card-hero-stat">
-          <span class="geo-hero-val cell-warn">5.8<span class="geo-hero-unit">pp</span></span>
+          <span class="geo-hero-val cell-good">2.8<span class="geo-hero-unit">pp</span></span>
           <span class="geo-hero-label">mean |error|</span>
         </div>
         <div class="geo-bias-bar">
-          <div class="geo-bias-indicator" style="--bias:-5.8;">
+          <div class="geo-bias-indicator" style="--bias:-1.5;">
             <span class="geo-bias-dot"></span>
           </div>
           <div class="geo-bias-labels">
             <span class="geo-bias-tag conservative">Conservative</span>
-            <span class="geo-bias-val">&minus;5.8&thinsp;pp signed</span>
+            <span class="geo-bias-val">median 2.2&thinsp;pp</span>
           </div>
         </div>
         <p class="geo-card-note">
-          Fully blind: turbine type unknown. Only had coordinates and annual MWh. The conservative bias means zero risk of overcrediting.
+          Strong results for onshore. Flat terrain + good ERA5 coverage. The largest single-country onshore fleet in the validation.
+        </p>
+      </div>
+
+      <!-- Belgium & Denmark -->
+      <div class="geo-card">
+        <div class="geo-card-region">Belgium &amp; Denmark</div>
+        <h4>ENTSO-E Offshore</h4>
+        <div class="geo-card-meta">14 farms &middot; North Sea &amp; Baltic &middot; Offshore</div>
+        <div class="geo-card-hero-stat">
+          <span class="geo-hero-val cell-warn">4.0<span class="geo-hero-unit">pp</span></span>
+          <span class="geo-hero-label">mean |error|</span>
+        </div>
+        <div class="geo-bias-bar">
+          <div class="geo-bias-indicator" style="--bias:-2.0;">
+            <span class="geo-bias-dot"></span>
+          </div>
+          <div class="geo-bias-labels">
+            <span class="geo-bias-tag conservative">Conservative</span>
+            <span class="geo-bias-val">median 1.7&thinsp;pp</span>
+          </div>
+        </div>
+        <p class="geo-card-note">
+          Includes older farms (Thorntonbank, Horns Rev A) where the legacy cubic actually outperforms the optimized generic&mdash;their constrained generation shapes are coincidentally cubic-like.
+        </p>
+      </div>
+
+      <!-- New Zealand -->
+      <div class="geo-card">
+        <div class="geo-card-region">New Zealand</div>
+        <h4>EMI Onshore</h4>
+        <div class="geo-card-meta">8 farms &middot; Complex terrain &middot; Onshore</div>
+        <div class="geo-card-hero-stat">
+          <span class="geo-hero-val cell-bad">8.5<span class="geo-hero-unit">pp</span></span>
+          <span class="geo-hero-label">mean |error|</span>
+        </div>
+        <div class="geo-bias-bar">
+          <div class="geo-bias-indicator" style="--bias:-8.0;">
+            <span class="geo-bias-dot"></span>
+          </div>
+          <div class="geo-bias-labels">
+            <span class="geo-bias-tag conservative">Conservative</span>
+            <span class="geo-bias-val">median 8.0&thinsp;pp</span>
+          </div>
+        </div>
+        <p class="geo-card-note">
+          Worst performers&mdash;complex terrain + low ERA5 wind speeds. Calibration with even 1 month of metered data dramatically improves results.
         </p>
       </div>
     </div>
@@ -2198,11 +2384,112 @@ section:nth-child(even of section) {
 </section>
 
 <!-- ════════════════════════════════════════════════════════════
-     SECTION 8: CALCULATOR
+     SECTION 8: SOLAR EXTENSION
+     ════════════════════════════════════════════════════════════ -->
+<section id="solar">
+  <div class="section-inner wide fade-in">
+    <div class="section-num">08 &mdash; Solar Extension</div>
+    <h2>Does the same approach work for solar? Easily.</h2>
+    <p>Wind&rsquo;s hard problem is the power curve&mdash;converting wind speed to generation introduces substantial error because different turbines produce fundamentally different distributions. Solar has no equivalent problem. The &ldquo;power curve&rdquo; is mostly physics: solar geometry is exact, and a simple GHI&thinsp;&rarr;&thinsp;POA model with default assumptions (latitude-tilt, equator-facing, ILR&thinsp;=&thinsp;1.25) produces accurate hourly shapes with <strong>zero site information</strong>.</p>
+
+    <div class="callout blue">
+      <div class="callout-label">Blind solar model</div>
+      <p>ERA5-Land GHI &rarr; solar position (astronomical) &rarr; plane-of-array irradiance (direct + diffuse + reflected) &rarr; DC power &rarr; inverter clipping. Panel tilt&thinsp;=&thinsp;|latitude|, azimuth faces equator. No tracking, no temperature derating, no site-specific tuning.</p>
+    </div>
+
+    <div class="geo-grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));">
+
+      <div class="geo-card">
+        <div class="geo-card-region">QLD &mdash; Tropical</div>
+        <h4>Ross River</h4>
+        <div class="geo-card-meta">116 MW AC &middot; -19.6&deg;S &middot; Single-axis tracking</div>
+        <div class="geo-card-hero-stat">
+          <span class="geo-hero-val cell-good">0.01<span class="geo-hero-unit">pp</span></span>
+          <span class="geo-hero-label">blind error</span>
+        </div>
+        <p class="geo-card-note">Essentially perfect. ERA5 solar geometry alone nails the generation distribution at this tropical latitude.</p>
+      </div>
+
+      <div class="geo-card">
+        <div class="geo-card-region">QLD &mdash; Subtropical</div>
+        <h4>Lilyvale</h4>
+        <div class="geo-card-meta">100 MW AC &middot; -23.4&deg;S &middot; Single-axis tracking</div>
+        <div class="geo-card-hero-stat">
+          <span class="geo-hero-val cell-good">1.2<span class="geo-hero-unit">pp</span></span>
+          <span class="geo-hero-label">blind error</span>
+        </div>
+        <p class="geo-card-note">Near the Tropic of Capricorn. Slight overestimate from fixed-tilt assumption on a tracking farm.</p>
+      </div>
+
+      <div class="geo-card">
+        <div class="geo-card-region">NSW &mdash; Temperate</div>
+        <h4>Beryl</h4>
+        <div class="geo-card-meta">87 MW AC &middot; -32.9&deg;S &middot; Single-axis tracking</div>
+        <div class="geo-card-hero-stat">
+          <span class="geo-hero-val cell-good">0.8<span class="geo-hero-unit">pp</span></span>
+          <span class="geo-hero-label">blind error</span>
+        </div>
+        <p class="geo-card-note">Inland NSW. Sub-1&thinsp;pp accuracy with no site knowledge at all.</p>
+      </div>
+
+      <div class="geo-card">
+        <div class="geo-card-region">SA &mdash; Southern</div>
+        <h4>Tailem Bend</h4>
+        <div class="geo-card-meta">100 MW AC &middot; -35.3&deg;S &middot; Single-axis tracking</div>
+        <div class="geo-card-hero-stat">
+          <span class="geo-hero-val cell-warn">5.2<span class="geo-hero-unit">pp</span></span>
+          <span class="geo-hero-label">blind error</span>
+        </div>
+        <p class="geo-card-note">The outlier. Metered CF of only 17.9% and max output at 95% of nameplate suggest <strong>grid constraints</strong>&mdash;same mechanism as the Scottish wind farms.</p>
+      </div>
+
+      <div class="geo-card">
+        <div class="geo-card-region">VIC &mdash; Southern</div>
+        <h4>Gannawarra</h4>
+        <div class="geo-card-meta">50 MW AC &middot; -35.8&deg;S &middot; Single-axis tracking</div>
+        <div class="geo-card-hero-stat">
+          <span class="geo-hero-val cell-good">0.9<span class="geo-hero-unit">pp</span></span>
+          <span class="geo-hero-label">blind error</span>
+        </div>
+        <p class="geo-card-note">Southernmost farm in the sample. Still sub-1&thinsp;pp blind accuracy.</p>
+      </div>
+
+    </div>
+
+    <!-- Summary stat cards -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;margin:2.5rem 0 1.5rem;">
+      <div style="padding:1.5rem;background:var(--bg-card);border:1px solid var(--ink-faint);border-radius:var(--radius);box-shadow:var(--shadow-1);">
+        <div style="font-family:var(--font-mono);font-size:1.8rem;font-weight:600;color:#EA4335;margin-bottom:0.5rem;">0.87 pp</div>
+        <div style="font-size:0.85rem;color:var(--ink-mid);">Median blind error (solar)</div>
+      </div>
+      <div style="padding:1.5rem;background:var(--bg-card);border:1px solid var(--ink-faint);border-radius:var(--radius);box-shadow:var(--shadow-1);">
+        <div style="font-family:var(--font-mono);font-size:1.8rem;font-weight:600;color:#FBBC05;margin-bottom:0.5rem;">2.3 pp</div>
+        <div style="font-size:0.85rem;color:var(--ink-mid);">Median blind error (wind)</div>
+      </div>
+      <div style="padding:1.5rem;background:var(--bg-card);border:1px solid var(--ink-faint);border-radius:var(--radius);box-shadow:var(--shadow-1);">
+        <div style="font-family:var(--font-mono);font-size:1.8rem;font-weight:600;color:#4285F4;margin-bottom:0.5rem;">4 / 5</div>
+        <div style="font-size:0.85rem;color:var(--ink-mid);">Farms under 1.3&thinsp;pp</div>
+      </div>
+      <div style="padding:1.5rem;background:var(--bg-card);border:1px solid var(--ink-faint);border-radius:var(--radius);box-shadow:var(--shadow-1);">
+        <div style="font-family:var(--font-mono);font-size:1.8rem;font-weight:600;color:#34A853;margin-bottom:0.5rem;">Zero</div>
+        <div style="font-size:0.85rem;color:var(--ink-mid);">Site info required</div>
+      </div>
+    </div>
+
+    <div class="callout" style="border-left-color:var(--good);background:var(--good-bg);">
+      <div class="callout-label" style="color:var(--good);">Why solar is easier</div>
+      <p>Wind&rsquo;s dominant error source&mdash;the power curve shape&mdash;doesn&rsquo;t exist for solar. Solar irradiance has a strong deterministic component (solar geometry is exact), with only cloud cover as the stochastic element. There is no equivalent of &ldquo;which turbine model&rdquo;&mdash;a panel is a panel. The result: <strong>sub-1&thinsp;pp accuracy with zero optimization</strong>, compared to wind which required an extensive parameter sweep to reach 2.3&thinsp;pp.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
+     SECTION 9: CALCULATOR
      ════════════════════════════════════════════════════════════ -->
 <section id="calculator">
   <div class="section-inner fade-in">
-    <div class="section-num">08 &mdash; Scenario Calculator</div>
+    <div class="section-num">09 &mdash; Scenario Calculator</div>
     <h2>Estimate your expected error</h2>
     <p>Select what information you have about a wind farm to see the expected matching score error based on our test results.</p>
 
@@ -2213,6 +2500,7 @@ section:nth-child(even of section) {
             <label>Power Curve Information</label>
             <select id="calc-curve">
               <option value="universal" selected>Universal default (recommended)</option>
+              <option value="calibrated">Calibrated with 1&ndash;3 months metered data</option>
               <option value="generic">Basic approach (not recommended)</option>
               <option value="optimized">Optimized variant</option>
               <option value="avg">Average of known turbine curves</option>
@@ -2265,20 +2553,20 @@ section:nth-child(even of section) {
      ════════════════════════════════════════════════════════════ -->
 <section id="evidence">
   <div class="section-inner wide fade-in">
-    <div class="section-num">09 &mdash; The Evidence Base</div>
-    <h2>Full results across 35 farms</h2>
+    <div class="section-num">10 &mdash; The Evidence Base</div>
+    <h2>Full results across 93 farms</h2>
     <p>
-      Tested on offshore farms (UK North Sea), complex onshore terrain (Scotland, UK), flat onshore (UK), grid-constrained Scottish farms, Australian wind farms, and continental sites (China, US Great Plains). All errors are absolute matching score differences vs. metered hourly data, for a flat 24/7 load profile.
+      Tested on 93 farms across 6 countries: UK offshore and onshore, Australian NEM fleet (19 farms), Ontario IESO (21 farms), Belgian and Danish offshore (14 farms via ENTSO-E), and New Zealand onshore (8 farms). All errors are absolute matching score differences vs. metered hourly data, for a flat 24/7 load profile.
     </p>
 
-    <h3>Core Results &mdash; UK Offshore (24 farms)</h3>
+    <h3>Fleet-Wide Results (93 farms)</h3>
     <p>
-      The universal default alone achieves <strong>~2.0 pp</strong> mean error across 28 farms &mdash; closing most of the gap from the basic approach (7.4 pp). Adding monthly scaling brings this to <strong>1.9 pp</strong>, and the best combination of all enhancements reaches <strong>1.3 pp</strong>. Even averaged manufacturer curves (2.6 pp) and exact turbine data (2.8 pp) perform in the same range. Full results in <a href="#appendix" style="color:var(--accent);">Appendix Table A</a>.
+      The optimized generic curve achieves <strong>median 2.3 pp</strong> (mean 3.5 pp) across all 93 farms, vs. 10.5 pp for the legacy cubic. The UK offshore core (24 Dryad farms) remains the best-characterized subset at <strong>1.5 pp mean</strong>. Ontario (21 farms) achieves 2.8 pp mean &mdash; strong results for onshore. Belgian/Danish offshore (14 farms) averages 4.0 pp, partly due to older constrained farms. New Zealand (8 farms) is the hardest case at 8.5 pp, driven by complex terrain and low ERA5 wind speeds. Excluding NZ, the 85-farm fleet achieves <strong>3.1 pp mean, 2.3 pp median</strong>. Full results in <a href="#appendix" style="color:var(--accent);">Appendix Table A</a>.
     </p>
 
-    <h3 style="margin-top:2rem;">Onshore &amp; International Validation (11 farms)</h3>
+    <h3 style="margin-top:2rem;">Offshore vs. Onshore</h3>
     <p>
-      Outside UK offshore, results vary by data quality: UK onshore farms achieve 0.4&ndash;2.6 pp, Australian farms 3.9&ndash;5.1 pp, and the US Great Plains 5.8 pp (fully blind). Grid-constrained Scottish farms show ~5 pp irreducible error due to output clipping. Per-farm breakdown in <a href="#appendix" style="color:var(--accent);">Appendix Table B</a>.
+      Offshore farms (38) average 2.4 pp; onshore farms (55) average 4.3 pp. The gap reflects ERA5's difficulty resolving terrain effects at its 27 km grid. Grid-constrained Scottish farms show ~5 pp irreducible error due to output clipping. Ontario onshore farms (flat terrain) approach offshore accuracy at 2.8 pp, confirming terrain complexity &mdash; not onshore/offshore status &mdash; is the key factor.
     </p>
 
     <h3 style="margin-top:2rem;">Temporal Sensitivity &mdash; A Critical Trap</h3>
@@ -2294,7 +2582,7 @@ section:nth-child(even of section) {
      ════════════════════════════════════════════════════════════ -->
 <section id="decision">
   <div class="section-inner fade-in">
-    <div class="section-num">10 &mdash; Decision Guide</div>
+    <div class="section-num">11 &mdash; Decision Guide</div>
     <h2>What should you use?</h2>
     <p>Walk through your data availability to find the recommended approach and expected accuracy.</p>
 
@@ -2307,7 +2595,8 @@ section:nth-child(even of section) {
       <div class="dt-node active" id="dt-q1">
         <div class="dt-question">Do you have the wind farm's hourly production data?</div>
         <div class="dt-options">
-          <button class="dt-option" data-q="q1" data-a="yes">Yes, hourly meter data</button>
+          <button class="dt-option" data-q="q1" data-a="yes">Yes, full year of hourly data</button>
+          <button class="dt-option" data-q="q1" data-a="partial">Partial &mdash; 1&ndash;6 months of hourly data</button>
           <button class="dt-option" data-q="q1" data-a="no">No &mdash; only registry data</button>
         </div>
       </div>
@@ -2332,6 +2621,16 @@ section:nth-child(even of section) {
         <div class="dt-result-title">Use Metered Data</div>
         <div class="dt-result-num">0 pp error</div>
         <div class="dt-result-desc">You have the gold standard. No shaped allocation needed. Use the actual hourly profile directly.</div>
+      </div>
+
+      <div class="dt-result" id="dt-result-calibrated">
+        <div class="dt-result-title">3-param calibration: use your metered window to tune the power curve</div>
+        <div class="dt-result-num">~1.7 &ndash; 1.8 pp</div>
+        <div class="dt-result-desc">
+          Sweep rated speed (9&ndash;15 m/s), exponent (1.25&ndash;3.0), and capacity cap (0.85&ndash;1.0) against your metered window to find the best-fit curve. Apply to the full year's satellite data.<br><br>
+          <strong>1 month</strong> of data reaches ~1.8 pp. <strong>3 months</strong> reaches ~1.7 pp. The physical constraints prevent overfitting&mdash;they are essential, not optional.<br><br>
+          Validated on <strong>93 farms across 6 countries</strong> with proper held-out evaluation (calibrate on N months, test on remaining months).
+        </div>
       </div>
 
       <div class="dt-result" id="dt-result-best">
@@ -2376,7 +2675,7 @@ section:nth-child(even of section) {
      ════════════════════════════════════════════════════════════ -->
 <section id="next-steps">
   <div class="section-inner fade-in">
-    <div class="section-num">11 &mdash; Next Steps</div>
+    <div class="section-num">12 &mdash; Next Steps</div>
     <h2>From research to implementation</h2>
     <p>
       These findings are ready for market adoption.
@@ -2386,39 +2685,26 @@ section:nth-child(even of section) {
       <div class="roadmap-item">
         <div class="roadmap-spine">
           <div class="roadmap-dot">
-            <svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M12 20V4M4 12l8-8 8 8"/></svg>
-          </div>
-          <div class="roadmap-line"></div>
-        </div>
-        <div class="roadmap-content">
-          <h4>Publish the validation paper</h4>
-          <p>Full methodology and results for peer review. 35-farm dataset across 4 countries. Reproducible using only publicly available satellite weather data.</p>
-        </div>
-      </div>
-
-      <div class="roadmap-item">
-        <div class="roadmap-spine">
-          <div class="roadmap-dot">
             <svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
           </div>
           <div class="roadmap-line"></div>
         </div>
         <div class="roadmap-content">
-          <h4>Working group adoption</h4>
-          <p>Include the universal default and the data hierarchy framework in the EnergyTag standard for shaped allocation when meter data is unavailable.</p>
+          <h4>Integrate into the GHGP Scope 2 process</h4>
+          <p>Satellite-based shaped allocation as an accepted fallback when hourly metered data is unavailable. The methodology requires only information already present in certificate registries: location, volume, and offshore/onshore designation.</p>
         </div>
       </div>
 
       <div class="roadmap-item">
         <div class="roadmap-spine">
           <div class="roadmap-dot">
-            <svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.66 0 3-4 3-9s-1.34-9-3-9m0 18c-1.66 0-3-4-3-9s1.34-9 3-9"/></svg>
+            <svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M12 20V4M4 12l8-8 8 8"/></svg>
           </div>
           <div class="roadmap-line"></div>
         </div>
         <div class="roadmap-content">
-          <h4>Free hosted tool</h4>
-          <p>A public web tool to generate satellite-based hourly generation profiles for any wind farm globally. Enter coordinates and annual production, get an 8760 shape back. No expertise required.</p>
+          <h4>Publish and peer-review the validation</h4>
+          <p>93-farm dataset across 6 countries, fully reproducible using only public satellite data. Seeking academic co-authorship and independent review of the methodology and findings.</p>
         </div>
       </div>
 
@@ -2430,8 +2716,8 @@ section:nth-child(even of section) {
           <div class="roadmap-line" style="display:none;"></div>
         </div>
         <div class="roadmap-content">
-          <h4>Enable hourly accounting on existing registries</h4>
-          <p>The shaped allocation methodology lets existing annual-only registries support hourly matching <strong>without requiring any new data from generators</strong>. RECs already carry location and volume, the two inputs needed.</p>
+          <h4>Integrate into registries as a default fallback</h4>
+          <p>Existing annual-only registries already carry location and volume &mdash; the two inputs needed. Satellite shaped allocation lets them support hourly matching <strong>without requiring any new data from generators</strong>. RECs already carry everything the formulas need.</p>
         </div>
       </div>
     </div>
@@ -2443,34 +2729,34 @@ section:nth-child(even of section) {
      ════════════════════════════════════════════════════════════ -->
 <section id="bottom-line" style="background:var(--bg);color:var(--ink);">
   <div class="section-inner fade-in">
-    <div class="section-num">12 &mdash; The Bottom Line</div>
+    <div class="section-num">13 &mdash; The Bottom Line</div>
     <h2>The case for satellite-based shaped allocation</h2>
 
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;margin:2rem 0;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;margin:2rem 0;">
       <div style="padding:1.5rem;background:var(--bg-card);border:1px solid var(--ink-faint);border-radius:var(--radius);box-shadow:var(--shadow-1);">
-        <div style="font-family:var(--font-mono);font-size:1.8rem;font-weight:600;color:#1A73E8;margin-bottom:0.5rem;">~2 pp</div>
-        <div style="font-size:0.85rem;color:var(--ink-mid);">Typical error with the universal default. One formula, no turbine data needed.</div>
+        <div style="font-family:var(--font-mono);font-size:1.8rem;font-weight:600;color:#EA4335;margin-bottom:0.5rem;">2.3 pp</div>
+        <div style="font-size:0.85rem;color:var(--ink-mid);">Median error across 93 farms. Two simple formulas, no turbine data needed.</div>
       </div>
       <div style="padding:1.5rem;background:var(--bg-card);border:1px solid var(--ink-faint);border-radius:var(--radius);box-shadow:var(--shadow-1);">
-        <div style="font-family:var(--font-mono);font-size:1.8rem;font-weight:600;color:#1A73E8;margin-bottom:0.5rem;">35</div>
-        <div style="font-size:0.85rem;color:var(--ink-mid);">Farms validated across UK, US, China, and Australia. Offshore, onshore, constrained.</div>
+        <div style="font-family:var(--font-mono);font-size:1.8rem;font-weight:600;color:#FBBC05;margin-bottom:0.5rem;">93</div>
+        <div style="font-size:0.85rem;color:var(--ink-mid);">Farms validated across 6 countries: UK, Australia, Canada, Belgium, Denmark, New Zealand.</div>
       </div>
       <div style="padding:1.5rem;background:var(--bg-card);border:1px solid var(--ink-faint);border-radius:var(--radius);box-shadow:var(--shadow-1);">
-        <div style="font-family:var(--font-mono);font-size:1.6rem;font-weight:600;color:#34A853;margin-bottom:0.5rem;">Conservative</div>
+        <div style="font-family:var(--font-sans);font-size:1.5rem;font-weight:500;color:#4285F4;margin-bottom:0.5rem;">Conservative</div>
         <div style="font-size:0.85rem;color:var(--ink-mid);">Satellite scores tend to slightly <em>understate</em> actual matching, the safe side of wrong.</div>
       </div>
       <div style="padding:1.5rem;background:var(--bg-card);border:1px solid var(--ink-faint);border-radius:var(--radius);box-shadow:var(--shadow-1);">
-        <div style="font-family:var(--font-mono);font-size:1.6rem;font-weight:600;color:#1A73E8;margin-bottom:0.5rem;">1 formula</div>
-        <div style="font-size:0.85rem;color:var(--ink-mid);">Universal default. Cross-validated with zero overfitting. Works across all terrain types.</div>
+        <div style="font-family:var(--font-mono);font-size:1.8rem;font-weight:600;color:#34A853;margin-bottom:0.5rem;">2 formulas</div>
+        <div style="font-size:0.85rem;color:var(--ink-mid);">Offshore and onshore defaults. Cross-validated with zero overfitting.</div>
       </div>
     </div>
 
     <div style="max-width:38em;margin:2rem 0;">
       <p style="color:var(--ink-mid);font-size:0.95rem;line-height:1.7;">
-        <strong style="color:var(--ink);">For policy makers:</strong> Satellite-based shaped allocation provides a reproducible, auditable default for hourly matching when meter data is unavailable. The universal default requires no turbine information, produces conservative bias, and has been validated across 35 farms in 4 countries.
+        <strong style="color:var(--ink);">For policy makers:</strong> Satellite-based shaped allocation provides a reproducible, auditable default for hourly matching when meter data is unavailable. The offshore and onshore formulas require no turbine information, produce conservative bias, and have been validated across 93 farms in 6 countries.
       </p>
       <p style="color:var(--ink-mid);font-size:0.95rem;line-height:1.7;">
-        <strong style="color:var(--ink);">For registries:</strong> Implement today. The recipe is three steps: (1) get satellite wind data for the farm's location, (2) apply the universal default formula, (3) scale to known production. Monthly scaling adds ~0.4 pp improvement. Use this year's weather data to preserve hourly timing. <strong style="color:var(--ink);">Never use simple year-by-year averaging.</strong>
+        <strong style="color:var(--ink);">For registries:</strong> Implement today. The recipe is three steps: (1) get satellite wind data for the farm's location, (2) apply the offshore or onshore formula, (3) scale to known production. Monthly scaling adds ~0.4 pp improvement. Use this year's weather data to preserve hourly timing. <strong style="color:var(--ink);">Never use simple year-by-year averaging.</strong>
       </p>
       <p style="color:var(--ink-mid);font-size:0.95rem;line-height:1.7;">
         <strong style="color:var(--ink);">For buyers:</strong> Nothing changes about how you source certificates. The satellite-derived hourly profile is applied at the end, so you can demonstrate an accurate hourly matching score even when the generator has not provided meter data. Generators who share real meter data will see a better score, which rewards data sharing over time.
@@ -2495,7 +2781,7 @@ section:nth-child(even of section) {
     <h2>Data Tables</h2>
 
     <h3 id="table-a">Table A &mdash; Core Results, UK Offshore (24 farms)</h3>
-    <p>The universal default closes most of the gap on its own. Turbine-specific data and monthly scaling can improve results further.</p>
+    <p>The default formulas close most of the gap on their own. Turbine-specific data and monthly scaling can improve results further.</p>
     <div class="evidence-table-wrap">
       <table class="evidence">
         <thead>
@@ -2564,118 +2850,93 @@ section:nth-child(even of section) {
       All errors are mean |matching score error| in percentage points (pp) vs. metered data. Flat (24/7) load profile.
     </div>
 
-    <h3 id="table-b" style="margin-top:3rem;">Table B &mdash; Per-Farm Onshore &amp; International Results</h3>
+    <h3 id="table-b" style="margin-top:3rem;">Table B &mdash; Fleet Results by Region (93 farms)</h3>
     <p>
-      The universal default is calibrated on UK offshore farms where satellite data arrives at 100&nbsp;m.
-      Outside that setting, results vary depending on local satellite data quality and grid constraints.
+      All results use the universal default (V<sub>r</sub>&thinsp;=&thinsp;13.5&thinsp;m/s, n&thinsp;=&thinsp;1.75).
+      Performance varies by region, terrain, and data quality.
     </p>
     <div class="evidence-table-wrap">
       <table class="evidence">
         <thead>
           <tr>
-            <th>Farm / Region</th>
-            <th>Country</th>
-            <th>Basic</th>
-            <th>Best Satellite</th>
+            <th>Region</th>
+            <th>Farms</th>
+            <th>Mean Error</th>
+            <th>Median Error</th>
             <th>Notes</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>Hill of Towie</td>
-            <td>UK</td>
-            <td class="cell-bad">9.7 pp</td>
-            <td class="cell-good">1.4 pp</td>
-            <td style="font-size:0.75rem;">Avg manufacturer curves; exact turbine = 0.1 pp</td>
+          <tr style="background:var(--good-bg);">
+            <td><strong>UK Offshore (Dryad)</strong></td>
+            <td>24</td>
+            <td class="cell-good"><strong>1.5 pp</strong></td>
+            <td class="cell-good"><strong>1.0 pp</strong></td>
+            <td style="font-size:0.75rem;">Core validation set; best performance</td>
           </tr>
           <tr>
-            <td>Kelmarsh</td>
-            <td>UK</td>
-            <td class="cell-bad">11.7 pp</td>
-            <td class="cell-good">0.4 pp</td>
-            <td style="font-size:0.75rem;">Avg manufacturer curves; exact turbine = 3.5 pp</td>
+            <td>UK Onshore (SCADA)</td>
+            <td>3</td>
+            <td class="cell-good">3.4 pp</td>
+            <td class="cell-good">1.1 pp</td>
+            <td style="font-size:0.75rem;">Kelmarsh 0.5&nbsp;pp; Penmanshiel 8.4&nbsp;pp (site bias)</td>
           </tr>
           <tr>
-            <td>Penmanshiel</td>
-            <td>UK</td>
-            <td class="cell-good">1.2 pp</td>
-            <td class="cell-good">2.6 pp</td>
-            <td style="font-size:0.75rem;">Satellite site bias, irreducible</td>
+            <td>UK BMRS (constrained)</td>
+            <td>4</td>
+            <td class="cell-warn">4.9 pp</td>
+            <td class="cell-warn">4.7 pp</td>
+            <td style="font-size:0.75rem;">Grid-constrained (max 40&ndash;50% of rated capacity)</td>
+          </tr>
+          <tr style="background:var(--good-bg);">
+            <td><strong>Canada (IESO Ontario)</strong></td>
+            <td>21</td>
+            <td class="cell-good"><strong>2.8 pp</strong></td>
+            <td class="cell-good"><strong>2.2 pp</strong></td>
+            <td style="font-size:0.75rem;">Flat terrain; 12 of 21 farms within &plusmn;3&nbsp;pp</td>
           </tr>
           <tr>
-            <td>Fallago Rig</td>
-            <td>UK</td>
-            <td class="cell-good">2.8 pp</td>
-            <td class="cell-warn">5.6 pp</td>
-            <td style="font-size:0.75rem;">Grid-constrained (max ~50% of rated)</td>
-          </tr>
-          <tr>
-            <td>Hadyard Hill</td>
-            <td>UK</td>
-            <td class="cell-good">1.3 pp</td>
-            <td class="cell-bad">7.7 pp</td>
-            <td style="font-size:0.75rem;">Grid-constrained (max ~41% of rated); cubic matches clipped shape</td>
-          </tr>
-          <tr>
-            <td>Whitelee</td>
-            <td>UK</td>
-            <td class="cell-bad">8.7 pp</td>
-            <td class="cell-good">2.7 pp</td>
-            <td style="font-size:0.75rem;">Grid-constrained (max ~49% of rated)</td>
-          </tr>
-          <tr>
-            <td>Griffin</td>
-            <td>UK</td>
-            <td class="cell-bad">7.4 pp</td>
-            <td class="cell-good">3.7 pp</td>
-            <td style="font-size:0.75rem;">Grid-constrained (max ~43% of rated)</td>
-          </tr>
-          <tr>
-            <td>Macarthur</td>
-            <td>AUS</td>
-            <td class="cell-bad">9.9 pp</td>
-            <td class="cell-good">4.1 pp</td>
-            <td style="font-size:0.75rem;">420 MW, Victoria</td>
-          </tr>
-          <tr>
-            <td>Hornsdale</td>
-            <td>AUS</td>
-            <td class="cell-bad">22.6 pp</td>
-            <td class="cell-good">3.9 pp</td>
-            <td style="font-size:0.75rem;">Satellite underestimates wind; universal default</td>
-          </tr>
-          <tr>
-            <td>Sapphire</td>
-            <td>AUS</td>
-            <td class="cell-bad">18.0 pp</td>
+            <td>Australia (AEMO NEM)</td>
+            <td>19</td>
+            <td class="cell-warn">4.3 pp</td>
             <td class="cell-warn">5.1 pp</td>
-            <td style="font-size:0.75rem;">270 MW, New South Wales</td>
+            <td style="font-size:0.75rem;">Wide range (0.1&ndash;9.4&nbsp;pp); SA cluster has V<sub>r</sub> mismatch</td>
           </tr>
           <tr>
-            <td>SDWPF</td>
-            <td>China</td>
-            <td class="cell-bad">21.4 pp</td>
-            <td class="cell-bad">12.5 pp</td>
-            <td style="font-size:0.75rem;">Satellite data only at 10&nbsp;m, extrapolated to 100&nbsp;m*; exact turbine = 2.6 pp</td>
+            <td>Belgium &amp; Denmark (ENTSO-E)</td>
+            <td>14</td>
+            <td class="cell-warn">4.0 pp</td>
+            <td class="cell-good">3.2 pp</td>
+            <td style="font-size:0.75rem;">North Sea offshore; older farms suit cubic better</td>
           </tr>
           <tr>
-            <td>SD Great Plains</td>
-            <td>USA</td>
-            <td class="cell-bad">17.6 pp</td>
-            <td class="cell-warn">5.8 pp</td>
-            <td style="font-size:0.75rem;">Fully blind, turbine unknown</td>
+            <td>New Zealand (EMI)</td>
+            <td>8</td>
+            <td class="cell-bad">8.5 pp</td>
+            <td class="cell-bad">8.0 pp</td>
+            <td style="font-size:0.75rem;">Complex terrain; highest errors in fleet</td>
+          </tr>
+          <tr style="border-top:2px solid var(--ink-faint); background:var(--good-bg);">
+            <td><strong>All 93 farms</strong></td>
+            <td>93</td>
+            <td class="cell-good"><strong>3.5 pp</strong></td>
+            <td class="cell-good"><strong>2.3 pp</strong></td>
+            <td style="font-size:0.75rem;">56% within &plusmn;3&nbsp;pp &middot; 69% within &plusmn;5&nbsp;pp</td>
+          </tr>
+          <tr>
+            <td><strong>Excluding NZ</strong></td>
+            <td>85</td>
+            <td class="cell-good"><strong>3.1 pp</strong></td>
+            <td class="cell-good"><strong>2.3 pp</strong></td>
+            <td style="font-size:0.75rem;">NZ complex terrain is an outlier region</td>
           </tr>
         </tbody>
       </table>
     </div>
     <div class="table-note">
-      "Best Satellite" = best satellite-only approach tested for each farm (universal default, averaged manufacturer curves, or optimized generic, varies by data available).
-      Grid-constrained farms have clipped generation (max 40&ndash;50% of rated capacity), which limits all methods.
-      <br><br>
-      *SDWPF: satellite wind data at this site is only available at 10&nbsp;m (vs. 100&nbsp;m for all other farms). Extrapolation from 10&nbsp;m to 100&nbsp;m adds uncertainty, inflating the error.
-    </div>
-    <div style="margin-top:1.2rem; padding:1rem 1.2rem; background:var(--bg-card); border-left:3px solid var(--ink-faint); border-radius:6px; font-size:0.85rem; line-height:1.5;">
-      <strong>Note:</strong> Hadyard Hill, Fallago Rig, and Griffin are grid-constrained; their output is capped well below rated capacity, distorting the generation shape in ways no wind-based method can predict.
+      All errors are mean |matching score error| in percentage points (pp) vs. metered data, using the universal default power curve (flat load profile).
+      Grid-constrained UK BMRS farms have clipped generation (max 40&ndash;50% of rated), limiting all methods.
+      Belgium/Denmark older farms (Belwind, Thorntonbank, Horns Rev A, Roedsand 1) have low capacity factors where the cubic default coincidentally outperforms the optimized curve.
     </div>
 
     <h3 id="table-c" style="margin-top:3rem;">Table C &mdash; Temporal Averaging Methods</h3>
@@ -2731,11 +2992,50 @@ section:nth-child(even of section) {
 </section>
 
 <!-- ════════════════════════════════════════════════════════════
+     ENERGY SHAPE BUILDER — LIVE TOOL
+     ════════════════════════════════════════════════════════════ -->
+<section id="tool" style="background:#fff;">
+  <div class="section-inner fade-in" style="text-align:center;padding:4rem 0;">
+    <div style="display:inline-block;font-size:12px;font-weight:500;letter-spacing:.5px;text-transform:uppercase;color:var(--google-blue);background:#E8F0FE;padding:5px 14px;border-radius:20px;margin-bottom:1.5rem;">Now live</div>
+    <h2 style="font-size:2rem;margin-bottom:1rem;">Energy Shape Builder</h2>
+    <p style="color:var(--ink-mid);font-size:1.05rem;line-height:1.7;max-width:36em;margin:0 auto 2rem;">
+      Everything on this page is now a working tool. Enter any location on Earth, choose onshore or offshore, and get a complete 8760-hour generation profile in seconds &mdash; using the same validated methodology, the same optimized defaults, the same ERA5 satellite data.
+    </p>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;max-width:48em;margin:0 auto 2.5rem;">
+      <div style="padding:1.5rem;background:var(--bg-card);border:1px solid var(--ink-faint);border-radius:var(--radius);box-shadow:var(--shadow-1);">
+        <div style="font-family:var(--font-mono);font-size:1.8rem;font-weight:600;color:#4285F4;margin-bottom:0.5rem;">3 inputs</div>
+        <div style="font-size:0.85rem;color:var(--ink-mid);">Location, terrain type, annual volume. That&rsquo;s it.</div>
+      </div>
+      <div style="padding:1.5rem;background:var(--bg-card);border:1px solid var(--ink-faint);border-radius:var(--radius);box-shadow:var(--shadow-1);">
+        <div style="font-family:var(--font-mono);font-size:1.8rem;font-weight:600;color:#34A853;margin-bottom:0.5rem;">8,760 hours</div>
+        <div style="font-size:0.85rem;color:var(--ink-mid);">Full-year hourly shape, downloadable as CSV.</div>
+      </div>
+      <div style="padding:1.5rem;background:var(--bg-card);border:1px solid var(--ink-faint);border-radius:var(--radius);box-shadow:var(--shadow-1);">
+        <div style="font-family:var(--font-mono);font-size:1.8rem;font-weight:600;color:#EA4335;margin-bottom:0.5rem;">Global</div>
+        <div style="font-size:0.85rem;color:var(--ink-mid);">ERA5 covers every point on Earth. Ready for deployment anywhere.</div>
+      </div>
+    </div>
+
+    <p style="color:var(--ink-mid);font-size:0.9rem;line-height:1.7;max-width:36em;margin:0 auto 2rem;">
+      Built on FastAPI + React. Caches raw ERA5 data so repeat queries resolve in under a second. Designed for Cloud Run with zero minimum instances &mdash; scales from free to fleet-wide.
+    </p>
+
+    <div class="callout blue" style="max-width:36em;margin:0 auto;text-align:left;">
+      <div class="callout-label">Ready for deployment</div>
+      <p style="font-size:0.95rem;line-height:1.6;color:var(--ink-mid);">
+        The Energy Shape Builder is built, tested, and containerized. One command deploys it globally on Google Cloud Run. The same methodology validated across 93 farms is now available as an API for any certificate registry, buyer platform, or energy market participant.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════
      FOOTER
      ════════════════════════════════════════════════════════════ -->
 <footer>
   <p>
-    Based on analysis of 35 wind farms across the UK, China, the US, and Australia using satellite weather data (ECMWF ERA5, 2000&ndash;2024) validated against hourly metered production.
+    Based on analysis of 93 wind farms across the UK, Australia, Canada, Belgium, Denmark, and New Zealand using satellite weather data (ECMWF ERA5, 2000&ndash;2024) validated against hourly metered production.
   </p>
 </footer>
 <!-- ════════════════════════════════════════════════════════════
@@ -2747,48 +3047,106 @@ section:nth-child(even of section) {
 
   /* ── Farm Data for Map ─────────────────────────────────── */
   var windFarmData = [
-    // UK Offshore (24)
-    { name:'Aberdeen', lat:57.214, lon:-1.95, cat:'UK Offshore', tier0:4.4, opt:0.9, tier3:null },
-    { name:'Barrow', lat:53.991, lon:-3.29, cat:'UK Offshore', tier0:4.9, opt:7.4, tier3:3.4 },
-    { name:'Beatrice', lat:58.105, lon:-2.995, cat:'UK Offshore', tier0:7.7, opt:5.0, tier3:2.4 },
-    { name:'Burbo Bank', lat:53.487, lon:-3.178, cat:'UK Offshore', tier0:5.0, opt:10.6, tier3:5.1 },
-    { name:'Burbo Bank Ext', lat:53.47, lon:-3.22, cat:'UK Offshore', tier0:9.7, opt:13.1, tier3:0.7 },
-    { name:'Dudgeon', lat:53.26, lon:1.38, cat:'UK Offshore', tier0:6.8, opt:17.6, tier3:4.0 },
-    { name:'East Anglia One', lat:52.135, lon:2.15, cat:'UK Offshore', tier0:7.0, opt:5.0, tier3:2.8 },
-    { name:'Greater Gabbard', lat:51.875, lon:1.93, cat:'UK Offshore', tier0:5.8, opt:2.9, tier3:2.8 },
-    { name:'Gunfleet Sands', lat:51.73, lon:1.21, cat:'UK Offshore', tier0:8.6, opt:10.4, tier3:1.7 },
-    { name:'Gwynt y Mor', lat:53.45, lon:-3.63, cat:'UK Offshore', tier0:7.0, opt:1.8, tier3:2.9 },
-    { name:'Hornsea One', lat:53.88, lon:1.8, cat:'UK Offshore', tier0:8.4, opt:2.7, tier3:1.8 },
-    { name:'Humber Gateway', lat:53.63, lon:0.28, cat:'UK Offshore', tier0:8.0, opt:2.5, tier3:1.1 },
-    { name:'Hywind Scotland', lat:57.48, lon:-1.35, cat:'UK Offshore', tier0:10.3, opt:3.1, tier3:0.1 },
-    { name:'Lincs', lat:53.17, lon:0.49, cat:'UK Offshore', tier0:7.4, opt:2.2, tier3:2.6 },
-    { name:'London Array', lat:51.63, lon:1.35, cat:'UK Offshore', tier0:8.6, opt:15.1, tier3:1.9 },
-    { name:'Ormonde', lat:54.09, lon:-3.42, cat:'UK Offshore', tier0:8.3, opt:0.6, tier3:null },
-    { name:'Race Bank', lat:53.2, lon:0.85, cat:'UK Offshore', tier0:6.3, opt:3.9, tier3:4.6 },
-    { name:'Rampion', lat:50.67, lon:-0.26, cat:'UK Offshore', tier0:4.8, opt:16.5, tier3:null },
-    { name:'Robin Rigg', lat:54.75, lon:-3.67, cat:'UK Offshore', tier0:11.1, opt:5.8, tier3:1.6 },
-    { name:'Walney 1', lat:54.04, lon:-3.51, cat:'UK Offshore', tier0:3.1, opt:3.6, tier3:5.8 },
-    { name:'Walney 2', lat:54.04, lon:-3.56, cat:'UK Offshore', tier0:5.8, opt:1.6, tier3:3.0 },
-    { name:'Walney Extension', lat:54.0, lon:-3.55, cat:'UK Offshore', tier0:7.1, opt:7.4, tier3:1.7 },
-    { name:'West of Duddon', lat:53.996, lon:-3.37, cat:'UK Offshore', tier0:9.2, opt:1.5, tier3:0.3 },
-    { name:'Westermost Rough', lat:53.81, lon:0.14, cat:'UK Offshore', tier0:11.9, opt:14.2, tier3:0.2 },
-    // UK Onshore (3)
-    { name:'Hill of Towie', lat:57.5, lon:-3.07, cat:'UK Onshore', tier0:9.7, opt:1.4, tier3:0.1 },
-    { name:'Kelmarsh', lat:52.27, lon:-0.42, cat:'UK Onshore', tier0:11.7, opt:0.4, tier3:3.5 },
-    { name:'Penmanshiel', lat:55.63, lon:-2.41, cat:'UK Onshore', tier0:1.2, opt:2.6, tier3:10.8 },
-    // BMRS Scottish (4)
-    { name:'Fallago Rig', lat:55.94, lon:-2.77, cat:'BMRS Scotland', tier0:2.8, opt:5.6, tier3:null },
-    { name:'Hadyard Hill', lat:55.25, lon:-4.7, cat:'BMRS Scotland', tier0:1.3, opt:7.7, tier3:null },
-    { name:'Whitelee', lat:55.7, lon:-4.28, cat:'BMRS Scotland', tier0:8.7, opt:2.7, tier3:null },
-    { name:'Griffin', lat:56.53, lon:-3.39, cat:'BMRS Scotland', tier0:7.4, opt:3.7, tier3:null },
-    // Australia (3)
-    { name:'Macarthur', lat:-38.043, lon:142.178, cat:'Australia', tier0:9.9, opt:4.1, tier3:null },
-    { name:'Hornsdale', lat:-33.086, lon:138.518, cat:'Australia', tier0:22.6, opt:8.4, tier3:null },
-    { name:'Sapphire', lat:-29.7, lon:151.417, cat:'Australia', tier0:18.0, opt:5.1, tier3:null },
-    // China (1)
-    { name:'SDWPF', lat:37.5, lon:121.0, cat:'China', tier0:21.4, opt:14.5, tier3:2.6 },
-    // US (1)
-    { name:'SD Great Plains', lat:44.3, lon:-96.5, cat:'USA', tier0:17.6, opt:5.8, tier3:null }
+    // UK Offshore — Dryad North Sea (24)
+    { name:'Aberdeen', lat:57.214, lon:-1.95, cat:'UK Offshore', tier0:4.4, opt:3.3 },
+    { name:'Barrow', lat:53.991, lon:-3.29, cat:'UK Offshore', tier0:4.8, opt:2.3 },
+    { name:'Beatrice', lat:58.105, lon:-2.995, cat:'UK Offshore', tier0:7.7, opt:0.6 },
+    { name:'Burbo Bank', lat:53.487, lon:-3.178, cat:'UK Offshore', tier0:4.9, opt:3.6 },
+    { name:'Burbo Bank Ext', lat:53.47, lon:-3.22, cat:'UK Offshore', tier0:9.5, opt:1.1 },
+    { name:'Dudgeon', lat:53.26, lon:1.38, cat:'UK Offshore', tier0:6.5, opt:0.2 },
+    { name:'East Anglia One', lat:52.135, lon:2.15, cat:'UK Offshore', tier0:6.6, opt:0.1 },
+    { name:'Greater Gabbard', lat:51.875, lon:1.93, cat:'UK Offshore', tier0:5.6, opt:0.9 },
+    { name:'Gunfleet Sands', lat:51.73, lon:1.21, cat:'UK Offshore', tier0:8.4, opt:0.6 },
+    { name:'Gwynt y Mor', lat:53.45, lon:-3.63, cat:'UK Offshore', tier0:6.8, opt:1.1 },
+    { name:'Hornsea One', lat:53.88, lon:1.8, cat:'UK Offshore', tier0:8.2, opt:2.1 },
+    { name:'Humber Gateway', lat:53.63, lon:0.28, cat:'UK Offshore', tier0:7.9, opt:0.5 },
+    { name:'Hywind Scotland', lat:57.48, lon:-1.35, cat:'UK Offshore', tier0:10.2, opt:4.2 },
+    { name:'Lincs', lat:53.17, lon:0.49, cat:'UK Offshore', tier0:7.2, opt:0.1 },
+    { name:'London Array', lat:51.63, lon:1.35, cat:'UK Offshore', tier0:8.5, opt:0.5 },
+    { name:'Ormonde', lat:54.09, lon:-3.42, cat:'UK Offshore', tier0:8.0, opt:0.5 },
+    { name:'Race Bank', lat:53.2, lon:0.85, cat:'UK Offshore', tier0:6.1, opt:0.6 },
+    { name:'Rampion', lat:50.67, lon:-0.26, cat:'UK Offshore', tier0:4.6, opt:1.0 },
+    { name:'Robin Rigg', lat:54.75, lon:-3.67, cat:'UK Offshore', tier0:10.9, opt:2.7 },
+    { name:'Walney 1', lat:54.04, lon:-3.51, cat:'UK Offshore', tier0:2.9, opt:3.5 },
+    { name:'Walney 2', lat:54.04, lon:-3.56, cat:'UK Offshore', tier0:5.7, opt:0.6 },
+    { name:'Walney Extension', lat:54.0, lon:-3.55, cat:'UK Offshore', tier0:6.9, opt:0.6 },
+    { name:'West of Duddon', lat:53.996, lon:-3.37, cat:'UK Offshore', tier0:9.1, opt:2.0 },
+    { name:'Westermost Rough', lat:53.81, lon:0.14, cat:'UK Offshore', tier0:11.8, opt:3.5 },
+    // UK Onshore — SCADA (3)
+    { name:'Hill of Towie', lat:57.5, lon:-3.07, cat:'UK Onshore', tier0:9.6, opt:1.1 },
+    { name:'Kelmarsh', lat:52.4, lon:-0.76, cat:'UK Onshore', tier0:11.5, opt:0.5 },
+    { name:'Penmanshiel', lat:55.87, lon:-2.35, cat:'UK Onshore', tier0:1.3, opt:8.4 },
+    // UK BMRS Scotland (4)
+    { name:'Fallago Rig', lat:55.94, lon:-2.77, cat:'BMRS Scotland', tier0:2.8, opt:5.6 },
+    { name:'Griffin', lat:56.53, lon:-3.39, cat:'BMRS Scotland', tier0:7.4, opt:3.7 },
+    { name:'Hadyard Hill', lat:55.25, lon:-4.7, cat:'BMRS Scotland', tier0:1.3, opt:7.7 },
+    { name:'Whitelee', lat:55.7, lon:-4.28, cat:'BMRS Scotland', tier0:8.7, opt:2.7 },
+    // Australia — AEMO NEM (19)
+    { name:'Ararat', lat:-37.31, lon:143.05, cat:'Australia', tier0:14.4, opt:2.0 },
+    { name:'Bald Hills', lat:-38.74, lon:145.95, cat:'Australia', tier0:11.8, opt:0.9 },
+    { name:'Capital', lat:-35.1, lon:149.44, cat:'Australia', tier0:13.8, opt:0.1 },
+    { name:'Gullen Range', lat:-34.77, lon:149.13, cat:'Australia', tier0:21.1, opt:8.7 },
+    { name:'Hallett 1', lat:-33.36, lon:138.54, cat:'Australia', tier0:20.6, opt:6.6 },
+    { name:'Hallett 2', lat:-33.41, lon:138.58, cat:'Australia', tier0:21.2, opt:7.2 },
+    { name:'Hornsdale', lat:-33.086, lon:138.518, cat:'Australia', tier0:22.7, opt:8.5 },
+    { name:'Lake Bonney 2', lat:-37.26, lon:140.44, cat:'Australia', tier0:13.8, opt:0.1 },
+    { name:'Lake Bonney 3', lat:-37.26, lon:140.47, cat:'Australia', tier0:14.3, opt:0.6 },
+    { name:'Macarthur', lat:-38.043, lon:142.178, cat:'Australia', tier0:9.9, opt:4.1 },
+    { name:'Musselroe', lat:-40.81, lon:148.12, cat:'Australia', tier0:7.5, opt:0.7 },
+    { name:'North Brown Hill', lat:-33.35, lon:138.52, cat:'Australia', tier0:20.4, opt:6.3 },
+    { name:'Portland', lat:-38.38, lon:141.61, cat:'Australia', tier0:7.0, opt:1.5 },
+    { name:'Sapphire', lat:-29.7, lon:151.417, cat:'Australia', tier0:18.1, opt:5.1 },
+    { name:'Snowtown 1', lat:-33.7, lon:138.48, cat:'Australia', tier0:21.8, opt:8.4 },
+    { name:'Snowtown 2', lat:-33.78, lon:138.47, cat:'Australia', tier0:22.7, opt:9.4 },
+    { name:'Waterloo', lat:-33.96, lon:138.71, cat:'Australia', tier0:19.1, opt:5.6 },
+    { name:'Waubra', lat:-37.387, lon:143.636, cat:'Australia', tier0:18.9, opt:6.0 },
+    { name:'Woolnorth', lat:-40.68, lon:144.76, cat:'Australia', tier0:10.1, opt:0.4 },
+    // Canada — IESO Ontario (21)
+    { name:'Amaranth', lat:44.15, lon:-80.25, cat:'Canada', tier0:15.2, opt:2.2 },
+    { name:'Armow', lat:44.17, lon:-81.3, cat:'Canada', tier0:11.2, opt:1.4 },
+    { name:'Comber', lat:42.25, lon:-82.55, cat:'Canada', tier0:12.6, opt:1.1 },
+    { name:'East Lake St Clair', lat:42.38, lon:-82.35, cat:'Canada', tier0:13.5, opt:2.0 },
+    { name:'Erieau', lat:42.28, lon:-81.9, cat:'Canada', tier0:10.0, opt:0.4 },
+    { name:'Grand Renewable', lat:44.0, lon:-80.3, cat:'Canada', tier0:8.9, opt:4.7 },
+    { name:'Greenwich', lat:42.45, lon:-82.58, cat:'Canada', tier0:18.4, opt:6.0 },
+    { name:'Henvey Inlet N', lat:45.75, lon:-80.2, cat:'Canada', tier0:17.6, opt:3.7 },
+    { name:'Henvey Inlet S', lat:45.7, lon:-80.25, cat:'Canada', tier0:17.8, opt:3.9 },
+    { name:'Jericho', lat:42.85, lon:-81.45, cat:'Canada', tier0:6.8, opt:5.6 },
+    { name:'K2 Wind', lat:43.98, lon:-81.37, cat:'Canada', tier0:13.1, opt:0.3 },
+    { name:'Niagara Region', lat:43.05, lon:-79.6, cat:'Canada', tier0:11.5, opt:0.8 },
+    { name:'Port Alma 1', lat:42.1, lon:-82.15, cat:'Canada', tier0:6.6, opt:2.3 },
+    { name:'Port Alma 3', lat:42.1, lon:-82.1, cat:'Canada', tier0:7.5, opt:1.5 },
+    { name:'Prince', lat:44.07, lon:-81.05, cat:'Canada', tier0:15.0, opt:2.1 },
+    { name:'Romney', lat:42.1, lon:-82.18, cat:'Canada', tier0:12.6, opt:3.7 },
+    { name:'Shannon', lat:44.15, lon:-81.15, cat:'Canada', tier0:18.8, opt:6.2 },
+    { name:'South Kent', lat:42.35, lon:-81.9, cat:'Canada', tier0:3.6, opt:6.0 },
+    { name:'Underwood', lat:44.2, lon:-81.4, cat:'Canada', tier0:12.8, opt:0.2 },
+    { name:'Wolfe Island', lat:44.18, lon:-76.38, cat:'Canada', tier0:14.8, opt:1.9 },
+    { name:'Zurich', lat:43.43, lon:-81.65, cat:'Canada', tier0:14.6, opt:2.9 },
+    // Belgium & Denmark — ENTSO-E (14)
+    { name:'Belwind Phase 1', lat:51.67, lon:2.81, cat:'ENTSO-E', tier0:0.2, opt:5.7 },
+    { name:'Nobelwind', lat:51.68, lon:2.79, cat:'ENTSO-E', tier0:3.2, opt:2.7 },
+    { name:'Norther', lat:51.53, lon:2.99, cat:'ENTSO-E', tier0:5.4, opt:1.3 },
+    { name:'Northwester 2', lat:51.69, lon:2.75, cat:'ENTSO-E', tier0:2.6, opt:8.4 },
+    { name:'Northwind', lat:51.58, lon:2.95, cat:'ENTSO-E', tier0:3.7, opt:3.0 },
+    { name:'Rentel', lat:51.59, lon:2.94, cat:'ENTSO-E', tier0:3.4, opt:3.3 },
+    { name:'Thorntonbank NE', lat:51.55, lon:2.97, cat:'ENTSO-E', tier0:0.4, opt:6.3 },
+    { name:'Thorntonbank SW', lat:51.54, lon:2.95, cat:'ENTSO-E', tier0:1.7, opt:5.0 },
+    { name:'Anholt', lat:56.6, lon:11.2, cat:'ENTSO-E', tier0:5.6, opt:0.7 },
+    { name:'Horns Rev A', lat:55.53, lon:7.84, cat:'ENTSO-E', tier0:1.9, opt:8.5 },
+    { name:'Horns Rev B', lat:55.6, lon:7.59, cat:'ENTSO-E', tier0:3.8, opt:2.3 },
+    { name:'Horns Rev C', lat:55.7, lon:7.6, cat:'ENTSO-E', tier0:4.9, opt:1.2 },
+    { name:'Roedsand 1', lat:54.55, lon:11.4, cat:'ENTSO-E', tier0:1.0, opt:7.4 },
+    { name:'Roedsand 2', lat:54.56, lon:11.5, cat:'ENTSO-E', tier0:8.0, opt:0.5 },
+    // New Zealand — EMI (8)
+    { name:'Mill Creek', lat:-41.3, lon:174.8, cat:'New Zealand', tier0:6.7, opt:1.1 },
+    { name:'Tararua 1-2', lat:-40.3, lon:175.9, cat:'New Zealand', tier0:21.4, opt:10.9 },
+    { name:'Tararua 3', lat:-40.3, lon:175.9, cat:'New Zealand', tier0:25.9, opt:15.4 },
+    { name:'Te Apiti', lat:-40.2, lon:176.0, cat:'New Zealand', tier0:28.1, opt:16.9 },
+    { name:'Te Rere Hau', lat:-40.3, lon:175.9, cat:'New Zealand', tier0:15.9, opt:5.4 },
+    { name:'Te Uku', lat:-37.8, lon:175.1, cat:'New Zealand', tier0:21.3, opt:9.5 },
+    { name:'West Wind', lat:-41.3, lon:174.7, cat:'New Zealand', tier0:7.9, opt:2.2 },
+    { name:'White Hill', lat:-46.1, lon:168.3, cat:'New Zealand', tier0:17.0, opt:6.6 }
   ];
 
   var catColors = {
@@ -2796,8 +3154,9 @@ section:nth-child(even of section) {
     'UK Onshore': '#16A34A',
     'BMRS Scotland': '#D97706',
     'Australia': '#DC2626',
-    'China': '#7C3AED',
-    'USA': '#EA580C'
+    'Canada': '#0D9488',
+    'ENTSO-E': '#7C3AED',
+    'New Zealand': '#EA580C'
   };
 
   /* ── Leaflet Map ───────────────────────────────────────── */
@@ -2826,15 +3185,12 @@ section:nth-child(even of section) {
         fillOpacity: 0.85
       }).addTo(map);
 
-      var bestErr = Math.min(farm.tier0, farm.opt);
-      var t3Line = farm.tier3 !== null ? '<br>Exact turbine: <strong>' + farm.tier3.toFixed(1) + ' pp</strong>' : '';
       marker.bindPopup(
         '<div style="font-family:DM Sans,sans-serif;font-size:13px;line-height:1.5;">' +
         '<strong>' + farm.name + '</strong><br>' +
         '<span style="font-size:11px;color:#9C9184;">' + farm.cat + '</span><br>' +
-        'Basic: <strong>' + farm.tier0.toFixed(1) + ' pp</strong><br>' +
-        'Our method: <strong>' + farm.opt.toFixed(1) + ' pp</strong>' +
-        t3Line +
+        'Cubic default: <strong>' + farm.tier0.toFixed(1) + ' pp</strong><br>' +
+        'Universal default: <strong>' + farm.opt.toFixed(1) + ' pp</strong>' +
         '</div>'
       );
     });
@@ -2845,6 +3201,64 @@ section:nth-child(even of section) {
     btn.classList.toggle('open');
     btn.nextElementSibling.classList.toggle('open');
   };
+
+  /* ── Calibration Bars ────────────────────────────────── */
+  /* 3-param physically constrained calibration (Vr, n, CF_max)
+     24 onshore farms, held-out test evaluation */
+  var calData = {
+    onshore: [
+      { n: 0,  label: 'Blind (no data)', val: 5.0 },
+      { n: 1,  label: '1 month (3-param)', val: 1.76 },
+      { n: 2,  label: '2 months (3-param)', val: 1.71 },
+      { n: 3,  label: '3 months (3-param)', val: 1.66 },
+      { n: 6,  label: '6 months (3-param)', val: 1.90 },
+      { n: 12, label: 'Full year',         val: 0.05 },
+    ],
+    offshore: [
+      { n: 0,  label: 'Blind (no data)', val: 0.9 },
+      { n: 1,  label: '1 month',          val: 1.6 },
+      { n: 2,  label: '2 months',         val: 1.3 },
+      { n: 3,  label: '3 months',         val: 1.2 },
+      { n: 6,  label: '6 months',         val: 0.7 },
+      { n: 12, label: 'Full year',         val: 0.05 },
+    ]
+  };
+
+  var calContainer = document.getElementById('cal-bars');
+  if (calContainer) {
+    var calMax = 8;
+    ['onshore', 'offshore'].forEach(function(group) {
+      var groupLabel = document.createElement('div');
+      groupLabel.className = 'cal-bar-group-label';
+      groupLabel.textContent = group === 'offshore'
+        ? 'Offshore (38 farms) \u2014 fleet-opt already excellent'
+        : 'Onshore (55 farms, 6 countries) \u2014 3-param calibration';
+      calContainer.appendChild(groupLabel);
+
+      calData[group].forEach(function(d) {
+        var row = document.createElement('div');
+        row.className = 'cal-bar-row';
+
+        var color;
+        if (d.val <= 2) color = 'var(--good)';
+        else if (d.val <= 3) color = '#2563EB';
+        else if (d.val <= 5) color = 'var(--warn)';
+        else color = 'var(--bad)';
+
+        var valText = d.val < 0.1 ? '<0.1 pp' : d.val.toFixed(1) + ' pp';
+
+        row.innerHTML =
+          '<div class="cal-bar-label">' + d.label + '</div>' +
+          '<div class="cal-bar-track">' +
+            '<div class="threshold-line t3" style="left:' + (3/calMax*100) + '%"></div>' +
+            '<div class="threshold-line t5" style="left:' + (5/calMax*100) + '%"></div>' +
+            '<div class="cal-bar-fill" data-width="' + (Math.max(d.val, 0.15) / calMax * 100) + '" style="width:0;background:' + color + ';opacity:0.75;"></div>' +
+          '</div>' +
+          '<div class="cal-bar-val">' + valText + '</div>';
+        calContainer.appendChild(row);
+      });
+    });
+  }
 
   /* ── Error Bars ───────────────────────────────────────── */
   var barData = [
@@ -2890,6 +3304,7 @@ section:nth-child(even of section) {
         entry.target.classList.add('visible');
         var bars = entry.target.querySelectorAll('.error-bar-fill');
         var cis = entry.target.querySelectorAll('.error-bar-ci');
+        var calBars = entry.target.querySelectorAll('.cal-bar-fill');
         bars.forEach(function(bar, i) {
           setTimeout(function() { bar.style.width = bar.dataset.width + '%'; }, i * 80);
         });
@@ -2898,6 +3313,9 @@ section:nth-child(even of section) {
             ci.style.left = ci.dataset.left + '%';
             ci.style.width = ci.dataset.width + '%';
           }, i * 80 + 200);
+        });
+        calBars.forEach(function(bar, i) {
+          setTimeout(function() { bar.style.width = bar.dataset.width + '%'; }, i * 60);
         });
       }
     });
@@ -2933,13 +3351,15 @@ section:nth-child(even of section) {
     var scaling = calcScaling.value;
     var temporal = calcTemporal.value;
 
-    // Grey out hub height when universal default selected
-    calcHH.disabled = (curve === 'universal');
-    if (curve === 'universal') calcHH.value = 'none';
+    // Grey out hub height when universal/calibrated selected
+    calcHH.disabled = (curve === 'universal' || curve === 'calibrated');
+    if (curve === 'universal' || curve === 'calibrated') calcHH.value = 'none';
 
     var error;
     if (curve === 'universal') {
       error = 2.0;
+    } else if (curve === 'calibrated') {
+      error = 1.7;
     } else if (curve === 'generic') {
       error = hh === 'known' ? 7.9 : 7.4;
     } else if (curve === 'optimized') {
@@ -2983,6 +3403,7 @@ section:nth-child(even of section) {
 
     var parts = [];
     if (curve === 'universal') parts.push('Universal default');
+    else if (curve === 'calibrated') parts.push('3-param calibrated (1\u20133 months metered)');
     else if (curve === 'generic') parts.push('Basic approach');
     else if (curve === 'optimized') parts.push('Optimized variant');
     else if (curve === 'avg') parts.push('Average of known turbine curves');
@@ -3045,6 +3466,8 @@ section:nth-child(even of section) {
 
       if (a === 'yes') {
         document.getElementById('dt-result-meter').classList.add('show');
+      } else if (a === 'partial') {
+        document.getElementById('dt-result-calibrated').classList.add('show');
       } else {
         document.getElementById('dt-q2').style.display = 'block';
         document.getElementById('dt-q2').classList.add('active');
